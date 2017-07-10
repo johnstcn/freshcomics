@@ -29,6 +29,7 @@ import (
 //	conn.Create(sd)
 //}
 
+
 func main() {
 	dsn := os.Getenv("DATABASE_URL")
 	db, err := gorm.Open("postgres", dsn)
@@ -40,15 +41,13 @@ func main() {
 	defer db.Close()
 	db.AutoMigrate(crawler.SiteDef{}, crawler.SiteUpdate{})
 
-	go func() {
-		for {
-			tick := 1 * time.Second
-			next := crawler.GetLastCheckedSiteDef(db)
-			if next != nil {
-				crawler.Crawl(db, next)
-			}
-			time.Sleep(tick)
+	for {
+		tick := 1 * time.Second
+		next := crawler.GetLastCheckedSiteDef(db)
+		if next != nil {
+			go crawler.Crawl(db, next)
 		}
-	}()
+		time.Sleep(tick)
+	}
 
 }
