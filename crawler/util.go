@@ -3,7 +3,6 @@ package crawler
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
@@ -13,7 +12,9 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/charset"
 	"gopkg.in/xmlpath.v2"
+	"io"
 )
 
 // ApplyRegex returns the first match of expr in input if present.
@@ -98,6 +99,14 @@ func GetLastCrawledURL(conn *gorm.DB, sd *SiteDef) (string, error) {
 	return lastUpdate.URL, nil
 }
 
+func DecodeHTMLString(r io.Reader) (io.Reader, error) {
+	utfRdr, err := charset.NewReader(r, "text/html")
+	if err != nil {
+		return nil, err
+	}
+	return utfRdr, nil
+}
+
 // FetchPage fetches and parses the given URL and returns the DOM.
 func FetchPage(url string) (*xmlpath.Node, error) {
 	log.Println("GET", url)
@@ -106,12 +115,17 @@ func FetchPage(url string) (*xmlpath.Node, error) {
 		return nil, errors.Wrapf(err, "get %s failed", url)
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	reader := strings.NewReader(string(body))
-	root, err := html.Parse(reader)
+
+	rdr, err := DecodeHTMLString(resp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to convert response to utf8")
+	}
+
+	root, err := html.Parse(rdr)
 	if err != nil {
 		return nil, errors.Wrap(err, "html failed to parse")
 	}
+
 	var b bytes.Buffer
 	html.Render(&b, root)
 	fixedHtml := b.String()
