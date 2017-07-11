@@ -1,3 +1,2 @@
-TODO add URL template field and paginate using ref and template
 TODO implement RSS
 TODO kill gorm and just use sql/sqlx for your own sanity (xo?)
