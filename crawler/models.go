@@ -8,35 +8,32 @@ import (
 	"gopkg.in/xmlpath.v2"
 )
 
-const (
-	DEFAULT_CHECK_INTERVAL = 60 * time.Minute
-)
+type SiteUpdate struct {
+	gorm.Model
+	SiteDefID 	uint
+	Ref       	string	`sql:"unique;index"`
+	URL       	string
+	Title     	string
+	Published   int64 	`sql:"index"`
+}
 
 type SiteDef struct {
 	gorm.Model
-	Name          string		 `sql:"unique;index"`
-	StartURL      string
-	LastChecked   time.Time		 `sql:"index"`
-	CheckInterval time.Duration
-	RefRegexp     string
-	NextPageXpath string
-	TitleXpath    string
-	TitleRegexp   string
-	DateXpath     string
-	DateRegexp    string
-	DateFormat    string
+	Name        string	`sql:"unique;index"`
+	StartURL    string
+	LastChecked int64	`sql:"index"`
+	PagTemplate string
+	RefXpath    string
+	RefRegexp   string
+	TitleXpath  string
+	TitleRegexp string
+	DateXpath   string
+	DateRegexp  string
+	DateFormat  string
 }
 
-type SiteUpdate struct {
-	gorm.Model
-	SiteDefID uint
-	Ref       string	`sql:"unique;index"`
-	URL       string
-	Title     string
-	Published time.Time `sql:"index"`
-}
-
-func NewSiteDef(name, startURL, refRegexp, nextPageXpath, titleXpath, titleRegexp, dateXpath, dateRegexp, dateFormat string) (*SiteDef, error) {
+// NewSiteDef is a convenience method for creating a new SiteDef
+func NewSiteDef(name, startURL, pagTemplate, refXpath, refRegexp, titleXpath, titleRegexp, dateXpath, dateRegexp, dateFormat string) (*SiteDef, error) {
 	if name == "" {
 		return nil, errors.New("SiteDef name can't be empty")
 	}
@@ -46,7 +43,7 @@ func NewSiteDef(name, startURL, refRegexp, nextPageXpath, titleXpath, titleRegex
 	if refRegexp == "" {
 		return nil, errors.New("SiteDef ref regexp can't be empty")
 	}
-	if nextPageXpath == "" {
+	if pagTemplate == "" {
 		return nil, errors.New("SiteDef next page xpath can't be empty")
 	}
 	if titleXpath == "" {
@@ -57,19 +54,24 @@ func NewSiteDef(name, startURL, refRegexp, nextPageXpath, titleXpath, titleRegex
 	}
 
 	sd := &SiteDef{
-		Name: name,
-		StartURL: startURL,
-		LastChecked: time.Unix(0, 0),
-		CheckInterval: DEFAULT_CHECK_INTERVAL,
-		RefRegexp: refRegexp,
-		NextPageXpath: nextPageXpath,
-		TitleXpath: titleXpath,
+		Name:        name,
+		StartURL:    startURL,
+		LastChecked: 0,
+		PagTemplate: pagTemplate,
+		RefXpath:    refXpath,
+		RefRegexp:   refRegexp,
+		TitleXpath:  titleXpath,
 		TitleRegexp: titleRegexp,
-		DateXpath: dateXpath,
-		DateRegexp: dateRegexp,
-		DateFormat: dateFormat,
+		DateXpath:   dateXpath,
+		DateRegexp:  dateRegexp,
+		DateFormat:  dateFormat,
 	}
 	return sd, nil
+}
+
+func (sd *SiteDef) SetLastChecked(value string) {
+	t , _ := time.Parse("2006-01-02T15:04:05", value)
+	sd.LastChecked = t.Unix()
 }
 
 // GetRefFromURL runs the RefRegexp of sd on url and returns the result.
@@ -110,7 +112,7 @@ func (sd *SiteDef) NewSiteUpdateFromPage(url string, page *xmlpath.Node) (*SiteU
 		Ref: ref,
 		URL: url,
 		Title: title,
-		Published: published,
+		Published: published.Unix(),
 	}
 	return su, nil
 }

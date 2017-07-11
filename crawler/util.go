@@ -1,14 +1,14 @@
 package crawler
 
 import (
-	"time"
+	"bytes"
 	"fmt"
 	"io/ioutil"
-	"strings"
-	"bytes"
-	"regexp"
 	"log"
 	"net/http"
+	"regexp"
+	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -29,6 +29,12 @@ func ApplyRegex(input, expr string) (string, error) {
 		return input, errors.New(fmt.Sprintf("input %s does not match regexp %s", input, expr))
 	}
 	return match[1], nil
+}
+
+func AlreadyExists(conn *gorm.DB, sd *SiteDef, ref string) bool {
+	var c int
+	conn.Model(&SiteUpdate{}).Where("site_def_id = ?", sd.ID).Where("ref = ?", ref).Count(&c)
+	return c > 0
 }
 
 // ApplyXPath evaluates the result of xpath in the context of page, returning an empty string and an error if no match.
@@ -58,23 +64,28 @@ func ApplyXPathAndFilter(page *xmlpath.Node, xpath string, regex string) (string
 
 // GetNextPageURL evaluates NextPageXpath of sd in the context of page.
 func GetNextPageURL(sd *SiteDef, page *xmlpath.Node) (string, error) {
-	nextPageUrl, err := ApplyXPathAndFilter(page, sd.NextPageXpath, "(.*)")
+	nextRef, err := ApplyXPathAndFilter(page, sd.RefXpath, sd.RefRegexp)
 	if err != nil {
 		return "", err
 	}
-	return nextPageUrl, nil
+	if nextRef == "" {
+		return nextRef, errors.New("next page ref is empty, check xpath or filter")
+	}
+	nextPageUrl := fmt.Sprintf(sd.PagTemplate, nextRef)
+	if nextPageUrl == "" {
+		return nextPageUrl, errors.New("next page url is empty, check xpath")
+	}
+   	return nextPageUrl, nil
 }
 
 func GetLastCheckedSiteDef(conn *gorm.DB) (*SiteDef) {
 	sd := &SiteDef{}
-	q := conn.Order("last_checked DESC").First(sd)
+	now := time.Now().UTC().Unix()
+	q := conn.Where("? - last_checked > 3600", now).Order("last_checked ASC").First(sd)
 	if q.Error != nil {
 		return nil
 	}
-	if time.Now().Sub(sd.LastChecked) > sd.CheckInterval {
-		return sd
-	}
-	return nil
+	return sd
 }
 
 // GetLastCrawledURL returns the URL of the newest SiteUpdate of sd, if present.
@@ -148,35 +159,45 @@ func FetchStartPageAndURL(conn *gorm.DB, sd *SiteDef) (*xmlpath.Node, string, er
 
 // Crawl runs an incremental crawl of sd.
 func Crawl(conn *gorm.DB, sd *SiteDef) {
-	sd.LastChecked = time.Now()
+	sd.LastChecked = time.Now().Unix()
 	conn.Save(sd)
 	start := time.Now()
 	log.Printf("start crawl: %s", sd.Name)
-	page, url, err := FetchStartPageAndURL(conn, sd)
+	page, pageUrl, err := FetchStartPageAndURL(conn, sd)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	log.Println("start url:", url)
+	log.Println("start pageUrl:", pageUrl)
 	for {
-		newUpdate, err := sd.NewSiteUpdateFromPage(url, page)
+		newUpdate, err := sd.NewSiteUpdateFromPage(pageUrl, page)
 		if err != nil {
-			log.Println("error creating new SiteUpdate from url:", err)
+			log.Println("error creating new SiteUpdate from pageUrl:", err)
 			break
 		}
 
-		err = conn.Create(newUpdate).Error
-		if err != nil {
-			log.Println("error persisting new SiteUpdate:", err)
-			break
+		if !AlreadyExists(conn, sd, newUpdate.Ref) {
+			err = conn.Create(newUpdate).Error
+			if err != nil {
+				log.Println("error persisting new SiteUpdate:", err)
+				break
+			}
+		} else {
+			log.Printf("not persisting update %s - already seen", newUpdate.URL)
 		}
 
-		url, err = GetNextPageURL(sd, page)
+
+		nextPageUrl, err := GetNextPageURL(sd, page)
 		if err != nil {
-			log.Println("error getting next page url:", err)
+			log.Println("error getting next page pageUrl:", err)
 			break
 		}
-		page, err = FetchPage(url)
+		if pageUrl == nextPageUrl {
+			log.Println("loop detected, check next page xpath")
+			break
+		}
+		pageUrl = nextPageUrl
+		page, err = FetchPage(pageUrl)
 		if err != nil {
 			log.Println("error fetching next page:", err)
 			break
@@ -188,3 +209,32 @@ func Crawl(conn *gorm.DB, sd *SiteDef) {
 	return
 }
 
+type TestCrawlResult struct {
+	Sucess bool
+	Error error
+	NextURL string
+	Result *SiteUpdate
+}
+
+// TestCrawl runs a test of a single URL without persisting anything
+func TestCrawl(sd *SiteDef) *TestCrawlResult {
+	res := &TestCrawlResult{}
+	page, err := FetchPage(sd.StartURL)
+	if err != nil {
+		res.Error = err
+		return res
+	}
+	su, err := sd.NewSiteUpdateFromPage(sd.StartURL, page)
+	res.Result = su
+	if err != nil {
+		res.Error = err
+		return res
+	}
+	url, err := GetNextPageURL(sd, page)
+	if err != nil {
+		res.Error = err
+		return res
+	}
+	res.NextURL = url
+	return res
+}
