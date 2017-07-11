@@ -11,7 +11,7 @@ import (
 type SiteUpdate struct {
 	gorm.Model
 	SiteDefID 	uint
-	Ref       	string	`sql:"unique;index"`
+	Ref       	string	`sql:"index"`
 	URL       	string
 	Title     	string
 	Published   int64 	`sql:"index"`
