@@ -1,0 +1,61 @@
+{{ template "admin_header" }}
+<div class="container">
+    <h1>{{ .SiteDef.Name }}</h1>
+    {{ if ne .Message "" }}
+        {{ if .Success }}
+            <div class="alert alert-success">{{ .Message }}</div>
+        {{ else }}
+            <div class="alert alert-danger">{{ .Message }}</div>
+        {{ end }}
+    {{ end }}
+    <form method="POST" action="/sitedef?id={{ .SiteDef.ID }}">
+        <div class="form-group">
+            <label class="control-label" for="sitedef_name">Name:</label>
+            <input class="form-control" type="text" id="sitedef_name" name="name" value="{{ .SiteDef.Name }}">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="sitedef_starturl">Start URL:</label>
+            <input class="form-control" type="url" id="sitedef_starturl" name="starturl" value="{{ .SiteDef.StartURL }}">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="sitedef_lastchecked">Last Checked:</label>
+            <input class="form-control" type="datetime" id="sitedef_lastchecked" name="lastchecked" value="{{ .SiteDef.LastChecked | datetime }}">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="sitedef_pagtemplate">Pagination Template:</label>
+            <input class="form-control" type="text" id="sitedef_pagtemplate" name="pagtemplate" value="{{ .SiteDef.PagTemplate }}">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="sitedef_refxpath">Ref XPath:</label>
+            <input class="form-control" type="text" id="sitedef_refxpath" name="refxpath" value="{{ .SiteDef.RefXpath}}">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="sitedef_refregexp">Ref Regexp:</label>
+            <input class="form-control" type="text" id="sitedef_refregexp" name="refregexp" value="{{ .SiteDef.RefRegexp }}">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="sitedef_titlexpath">Title XPath:</label>
+            <input class="form-control" type="text" id="sitedef_titlexpath" name="titlexpath" value="{{ .SiteDef.TitleXpath }}">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="sitedef_titleregexp">Title Regexp:</label>
+            <input class="form-control" type="text" id="sitedef_titleregexp" name="titleregexp" value="{{ .SiteDef.TitleRegexp }}">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="sitedef_datexpath">Date XPath:</label>
+            <input class="form-control" type="text" id="sitedef_datexpath" name="datexpath" value="{{ .SiteDef.DateXpath}}">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="sitedef_refregexp">Date Regexp:</label>
+            <input class="form-control" type="text" id="sitedef_dateregexp" name="dateregexp" value="{{ .SiteDef.DateRegexp}}">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="sitedef_dateformat">Date Format (Mon Jan 2 15:04:05 MST 2006):</label>
+            <input class="form-control" type="text" id="sitedef_dateformat" name="dateformat" value="{{ .SiteDef.DateFormat }}">
+        </div>
+        <div class="form-group">
+            <input class="btn btn-default" type="submit" value="Submit">
+        </div>
+    </form>
+</div><!-- /.container -->
+{{ template "admin_footer" }}

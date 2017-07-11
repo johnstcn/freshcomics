@@ -20,7 +20,7 @@ type IndexHandler struct {
 func (h *IndexHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	defs := make([]SiteDef, 0, 0)
 	h.db.Find(&defs)
-	err := tpl.ExecuteTemplate(resp, "sitedef_index.gohtml", &defs)
+	err := tpl.ExecuteTemplate(resp, "admin_index.gohtml", &defs)
 	if err != nil {
 		log.Println("could not execute template:", err)
 	}
@@ -63,7 +63,7 @@ func (h *DetailsHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) 
 			r.Message = err.Error()
 		}
 	}
-	err := tpl.ExecuteTemplate(resp, "sitedef_details.gohtml", r)
+	err := tpl.ExecuteTemplate(resp, "admin_details.gohtml", r)
 	if err != nil {
 		log.Println("could not execute template:", err)
 	}
@@ -105,7 +105,7 @@ func (h *NewSiteDefHandler) ServeHTTP(resp http.ResponseWriter, req *http.Reques
 			http.Redirect(resp, req, sdUrl, 302)
 		}
 	}
-	err = tpl.ExecuteTemplate(resp, "sitedef_new.gohtml", r)
+	err = tpl.ExecuteTemplate(resp, "admin_new.gohtml", r)
 	if err != nil {
 		log.Println("could not execute template:", err)
 	}
@@ -163,5 +163,5 @@ func initTemplates() {
 			return fmt.Sprintf("%dm %ds", mins, secs)
 		},
 	}
-	tpl = template.Must(template.New("").Funcs(fm).ParseGlob("templates/sitedef_*.gohtml"))
+	tpl = template.Must(template.New("").Funcs(fm).ParseGlob("templates/admin_*.gohtml"))
 }
