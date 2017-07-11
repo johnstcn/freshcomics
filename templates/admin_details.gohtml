@@ -1,6 +1,7 @@
 {{ template "admin_header" }}
 <div class="container-fluid">
     <h1>{{ .SiteDef.Name }}</h1>
+    <hr/>
     {{ if ne .Message "" }}
         {{ if .Success }}
             <div class="alert alert-success">{{ .Message }}</div>
@@ -10,6 +11,7 @@
     {{ end }}
     <div class="row">
         <div class="col-sm-8">
+        <h4>Definition</h4>
         <form method="POST" id="sitedef_form" action="/sitedef?id={{ .SiteDef.ID }}">
             <div class="form-group">
                 <label class="control-label" for="sitedef_name">Name:</label>
@@ -56,7 +58,7 @@
                 <input class="form-control" type="text" id="sitedef_dateformat" name="dateformat" value="{{ .SiteDef.DateFormat }}">
             </div>
             <div class="form-group">
-                <input class="btn btn-primary" type="submit" value="Submit">
+                <input class="btn btn-block btn-primary" type="submit" value="Submit">
             </div>
         </form>
         </div><!-- ./col -->

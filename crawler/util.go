@@ -224,8 +224,7 @@ func Crawl(conn *gorm.DB, sd *SiteDef) {
 }
 
 type TestCrawlResult struct {
-	Sucess bool
-	Error error
+	Error string
 	NextURL string
 	Result *SiteUpdate
 }
@@ -235,18 +234,18 @@ func TestCrawl(sd *SiteDef) *TestCrawlResult {
 	res := &TestCrawlResult{}
 	page, err := FetchPage(sd.StartURL)
 	if err != nil {
-		res.Error = err
+		res.Error = err.Error()
 		return res
 	}
 	su, err := sd.NewSiteUpdateFromPage(sd.StartURL, page)
 	res.Result = su
 	if err != nil {
-		res.Error = err
+		res.Error = err.Error()
 		return res
 	}
 	url, err := GetNextPageURL(sd, page)
 	if err != nil {
-		res.Error = err
+		res.Error = err.Error()
 		return res
 	}
 	res.NextURL = url

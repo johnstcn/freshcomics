@@ -1,6 +1,29 @@
 {{ define "admin_testform" }}
+<h4>Test Results</h4>
+<div class="alert alert-danger" id="test_error" style="display:none;"></div>
 <div class="form-group">
-<button id="test_button" class="btn btn-default">Test</button>
+    <label class="control-label" for="test_ref">Ref:</label>
+    <input class="form-control" type="text" id="test_ref">
+</div>
+<div class="form-group">
+    <label class="control-label" for="test_url">URL:</label>
+    <input class="form-control" type="text" id="test_url">
+</div>
+<div class="form-group">
+    <label class="control-label" for="test_title">Title:</label>
+    <input class="form-control" type="text" id="test_title">
+</div>
+<div class="form-group">
+    <label class="control-label" for="test_date">Date:</label>
+    <input class="form-control" type="text" id="test_date">
+</div>
+<div class="form-group">
+    <label class="control-label" for="test_nextpage">Next Page URL:</label>
+    <input class="form-control" type="text" id="test_nextpage">
+</div>
+<div class="form-group">
+    <button id="test_button" class="btn btn-block btn-default">Test</button>
+</div>
 <script type="text/javascript">
 function serializeForm() {
     f = $("#sitedef_form").serializeArray()
@@ -10,21 +33,47 @@ function serializeForm() {
     }
     return o
 }
+
+function showHideError(result) {
+    err = $("#test_error");
+    if (result.Error !== "") {
+        err.text(result.Error);
+        err.show();
+    } else {
+        err.hide();
+    }
+}
+
+function timestampToUTCString(ts) {
+    return new Date(ts * 1000).toUTCString();
+}
+
+function isPresent(thing) {
+    return (thing !== undefined && thing !== null);
+}
+
+function writeTestResult(result) {
+    showHideError(result);
+    if (isPresent(result.Result)) {
+        $("#test_ref").val(result.Result.Ref);
+        $("#test_url").val(result.Result.URL);
+        $("#test_title").val(result.Result.Title);
+        $("#test_date").val(timestampToUTCString(result.Result.Published));
+        $("#test_nextpage").val(result.NextURL);
+    }
+}
+
 function bindTestHandler() {
     $("#test_button").click(function() {
         $.ajax({
             method: "POST",
             url: "/test",
             data: serializeForm()
-        }).done(function(data) {
-            $("#results_area").val(data);
+        }).done(function(result) {
+            writeTestResult(JSON.parse(result));
         });
     });
 }
 bindTestHandler();
 </script>
-</div>
-<div class="form-group">
-<textarea id="results_area"></textarea>
-</div>
 {{ end }}

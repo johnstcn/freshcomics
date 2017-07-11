@@ -127,16 +127,20 @@ func TestHandler (resp http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		enc := json.NewEncoder(resp)
 		enc.Encode(struct {
-			Success bool
 			Error   string
+			NextURL string
+			Result struct{}
 		}{
-			false,
 			err.Error(),
+			 "",
+			struct{}{},
 		})
+	} else {
+		res := TestCrawl(sd)
+		enc := json.NewEncoder(resp)
+		enc.SetIndent("", "\t")
+		enc.Encode(res)
 	}
-	res := TestCrawl(sd)
-	enc := json.NewEncoder(resp)
-	enc.Encode(res)
 }
 
 func ServeAdmin(db *gorm.DB) {
