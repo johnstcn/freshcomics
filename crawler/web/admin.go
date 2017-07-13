@@ -38,7 +38,7 @@ type detailsResponse struct {
 func newSiteDefHandler(resp http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		dao := models.GetDAO()
-		name := req.PostForm.Get("name")
+		name := req.PostFormValue("name")
 		def, err := dao.CreateSiteDef()
 		if err != nil {
 			log.Error.Println(err)
