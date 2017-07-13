@@ -1,12 +1,16 @@
 {{ template "admin_header" }}
     <div class="container">
         <h1>SiteDef Index</h1>
-        <div class="list-group">
-            <a class="list-group-item" href="/sitedef/new">Create New</a>
-            {{ range . }}
-            <a class="list-group-item" href="/sitedef?id={{ .ID }}">{{ .Name }}</a>
-            {{ end }}
-        </ul>
-      </div>
+        <div class="panel panel-default">
+            <a class="btn btn-primary btn-block" href="/sitedef/new">Create New</a>
+        </div>
+        <div class="panel panel-default">
+            <div class="list-group">
+                {{ range . }}
+                <a class="list-group-item" href="/sitedef?id={{ .ID }}">{{ .Name }}</a>
+                {{ end }}
+            </ul>
+          </div>
+        </div>
     </div><!-- /.container -->
 {{ template "admin_footer" }}
