@@ -3,9 +3,9 @@ package main
 import (
 	"time"
 
-	"github.com/johnstcn/freshcomics/crawler/web"
-	"github.com/johnstcn/freshcomics/crawler/util"
 	"github.com/johnstcn/freshcomics/crawler/models"
+	"github.com/johnstcn/freshcomics/crawler/util"
+	"github.com/johnstcn/freshcomics/crawler/web"
 )
 
 var DEFAULT_CHECK_INTERVAL = 60 * time.Minute
