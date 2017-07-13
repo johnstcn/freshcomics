@@ -58,7 +58,7 @@ function writeTestResult(result) {
         $("#test_ref").val(result.Result.Ref);
         $("#test_url").val(result.Result.URL);
         $("#test_title").val(result.Result.Title);
-        $("#test_date").val(timestampToUTCString(result.Result.Published));
+        $("#test_date").val(result.Result.Published);
         $("#test_nextpage").val(result.NextURL);
     }
 }
@@ -67,7 +67,7 @@ function bindTestHandler() {
     $("#test_button").click(function() {
         $.ajax({
             method: "POST",
-            url: "/test",
+            url: "/sitedef/test",
             data: serializeForm()
         }).done(function(result) {
             writeTestResult(JSON.parse(result));

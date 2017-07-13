@@ -12,10 +12,16 @@
     <div class="row">
         <div class="col-sm-8">
         <h4>Definition</h4>
-        <form method="POST" id="sitedef_form" action="/sitedef?id={{ .SiteDef.ID }}">
+        <form class="form-horizontal" method="POST" id="sitedef_form" action="/sitedef?id={{ .SiteDef.ID }}">
             <div class="form-group">
                 <label class="control-label" for="sitedef_name">Name:</label>
                 <input class="form-control" type="text" id="sitedef_name" name="name" value="{{ .SiteDef.Name }}">
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="sitedef_nsfw">NSFW?</label>
+                <input class="form-control" type="checkbox" id="sitedef_nsfw" name="nsfw" value="true" {{ if .SiteDef.NSFW }} checked {{ end }}>
+                <label class="control-label" for="sitedef_active">Active?</label>
+                <input class="form-control" type="checkbox" id="sitedef_active" name="active" value="true" {{ if .SiteDef.Active }} checked {{ end }}>
             </div>
             <div class="form-group">
                 <label class="control-label" for="sitedef_starturl">Start URL:</label>
@@ -26,12 +32,12 @@
                 <input class="form-control" type="datetime" id="sitedef_lastchecked" name="lastchecked" value="{{ .SiteDef.LastChecked | datetime }}">
             </div>
             <div class="form-group">
-                <label class="control-label" for="sitedef_pagtemplate">Pagination Template:</label>
-                <input class="form-control" type="text" id="sitedef_pagtemplate" name="pagtemplate" value="{{ .SiteDef.PagTemplate }}">
+                <label class="control-label" for="sitedef_urltemplate">URL Template:</label>
+                <input class="form-control" type="text" id="sitedef_urltemplate" name="urltemplate" value="{{ .SiteDef.URLTemplate }}">
             </div>
             <div class="form-group">
                 <label class="control-label" for="sitedef_refxpath">Ref XPath:</label>
-                <input class="form-control" type="text" id="sitedef_refxpath" name="refxpath" value="{{ .SiteDef.RefXpath}}">
+                <input class="form-control" type="text" id="sitedef_refxpath" name="refxpath" value="{{ .SiteDef.RefXpath }}">
             </div>
             <div class="form-group">
                 <label class="control-label" for="sitedef_refregexp">Ref Regexp:</label>
@@ -51,11 +57,19 @@
             </div>
             <div class="form-group">
                 <label class="control-label" for="sitedef_refregexp">Date Regexp:</label>
-                <input class="form-control" type="text" id="sitedef_dateregexp" name="dateregexp" value="{{ .SiteDef.DateRegexp}}">
+                <input class="form-control" type="text" id="sitedef_dateregexp" name="dateregexp" value="{{ .SiteDef.DateRegexp }}">
             </div>
             <div class="form-group">
                 <label class="control-label" for="sitedef_dateformat">Date Format (Mon Jan 2 15:04:05 MST 2006):</label>
                 <input class="form-control" type="text" id="sitedef_dateformat" name="dateformat" value="{{ .SiteDef.DateFormat }}">
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="sitedef_nextpagexpath">Next Page XPath:</label>
+                <input class="form-control" type="text" id="sitedef_nextpagexpath" name="nextpagexpath" value="{{ .SiteDef.NextPageXpath }}">
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="sitedef_nextpageregexp">Next Page Regexp:</label>
+                <input class="form-control" type="text" id="sitedef_nextpageregexp" name="nextpageregexp" value="{{ .SiteDef.NextPageRegexp }}">
             </div>
             <div class="form-group">
                 <input class="btn btn-block btn-primary" type="submit" value="Submit">
