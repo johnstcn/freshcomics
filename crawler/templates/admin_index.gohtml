@@ -1,16 +1,27 @@
 {{ template "admin_header" }}
     <div class="container">
-        <h1>SiteDef Index</h1>
-        <div class="panel panel-default">
-            <a class="btn btn-primary btn-block" href="/sitedef/new">Create New</a>
+        <div class="panel panel-primary">
+            <div class="panel-heading">Create New SiteDef</div>
+            <div class="panel-body">
+                <div class="row">
+                    <form class="form-inline" method="POST" action="/sitedef/new">
+                        <div class="col-sm-8">
+                            <input class="col-sm-8 input-sm" required type="text" name="name" placeholder="SiteDef Name">
+                        </div>
+                        <div class="col-sm-4">
+                            <input class="btn btn-primary" type="submit" value="Create">
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="panel panel-default">
+        <hr/>
+        <div class="row">
             <div class="list-group">
                 {{ range . }}
                 <a class="list-group-item" href="/sitedef?id={{ .ID }}">{{ .Name }}</a>
                 {{ end }}
             </ul>
-          </div>
         </div>
     </div><!-- /.container -->
 {{ template "admin_footer" }}

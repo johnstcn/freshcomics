@@ -36,16 +36,23 @@ type detailsResponse struct {
 }
 
 func newSiteDefHandler(resp http.ResponseWriter, req *http.Request) {
-	dao := models.GetDAO()
-	def, err := dao.CreateSiteDef()
-	if err != nil {
-		log.Error.Println(err)
-	}
-	rdir := fmt.Sprintf("/sitedef?id=%d", def.ID)
-	log.Info.Println("Redirecting to", rdir)
-	http.Redirect(resp, req, rdir, 302)
-	if err != nil {
-		log.Error.Println("could not execute template:", err)
+	if req.Method == http.MethodPost {
+		dao := models.GetDAO()
+		name := req.PostForm.Get("name")
+		def, err := dao.CreateSiteDef()
+		if err != nil {
+			log.Error.Println(err)
+		}
+		def.Name = name
+		err = dao.SaveSiteDef(def)
+		if err != nil {
+			log.Error.Println(err)
+		}
+		rdir := fmt.Sprintf("/sitedef?id=%d", def.ID)
+		log.Info.Println("Redirecting to", rdir)
+		http.Redirect(resp, req, rdir, 302)
+	} else {
+		http.Redirect(resp, req, "/", 302)
 	}
 }
 
