@@ -16,6 +16,12 @@ import (
 
 var tpl *template.Template
 
+func getTemplate(assetName string) *template.Template {
+	tmplBytes := MustAsset(assetName)
+	tmpl := template.Must(template.New(assetName).Parse(string(tmplBytes)))
+	return tmpl
+}
+
 // Shows a list of SiteDefs
 func siteDefsHandler(resp http.ResponseWriter, req *http.Request) {
 	dao := models.GetDAO()
@@ -23,7 +29,8 @@ func siteDefsHandler(resp http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Error.Println(err)
 	}
-	err = tpl.ExecuteTemplate(resp, "admin_index.gohtml", &defs)
+	//tpl := getTemplate("admin_index.gohtml")
+	err = tpl.ExecuteTemplate(resp, "admin_index", &defs)
 	if err != nil {
 		log.Error.Println("could not execute template:", err)
 	}
@@ -95,7 +102,8 @@ func detailsHandler(resp http.ResponseWriter, req *http.Request) {
 			log.Error.Println(err)
 		}
 	}
-	err = tpl.ExecuteTemplate(resp, "admin_details.gohtml", r)
+	//tpl := getTemplate("admin_details.gohtml")
+	err = tpl.ExecuteTemplate(resp, "admin_details", r)
 	if err != nil {
 		log.Error.Println("could not execute template:", err)
 	}
@@ -125,7 +133,6 @@ func testHandler(resp http.ResponseWriter, req *http.Request) {
 }
 
 func ServeAdmin() {
-	initTemplates()
 	listenAddress := os.Getenv("HOSTPORT")
 	http.HandleFunc("/", siteDefsHandler)
 	http.HandleFunc("/sitedef", detailsHandler)
@@ -141,5 +148,12 @@ func initTemplates() {
 			return t.Format("2006-01-02T15:04:05")
 		},
 	}
-	tpl = template.Must(template.New("").Funcs(fm).ParseGlob("templates/admin_*.gohtml"))
+	tpl = template.New("").Funcs(fm)
+	for _, an := range AssetNames() {
+		tpl.Parse(string(MustAsset(an)))
+	}
+}
+
+func init() {
+	initTemplates()
 }
