@@ -1,2 +1,4 @@
-TODO implement RSS
-TODO kill gorm and just use sql/sqlx for your own sanity (xo?)
+TODO implement RSS feed scraping
+TODO implement frontend MVP
+TODO implement user logins
+TODO implement user reading state
