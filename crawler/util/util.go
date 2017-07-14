@@ -132,31 +132,6 @@ func Crawl(sd *models.SiteDef) {
 	if pageUrl == "" {
 		log.Info.Println("initial crawl")
 		pageUrl = sd.StartURL
-		// 	page, err = FetchPage(sd.StartURL)
-
-		// 	if err != nil {
-		// 		log.Error.Println("error fetching start url:", err)
-		// 		return
-		// 	}
-
-		// 	firstUpdate, err := NewSiteUpdateFromPage(sd, pageUrl, page)
-		// 	if err != nil {
-		// 		log.Error.Println("error creating first SiteUpdate:", err)
-		// 		return
-		// 	}
-
-		// 	err = dao.CreateSiteUpdate(firstUpdate)
-		// 	if err != nil {
-		// 		log.Error.Println("error persisting first SiteUpdate:", err)
-		// 		return
-		// 	}
-		// } else {
-		// 	log.Info.Println("start url:", pageUrl)
-		// 	page, err = FetchPage(pageUrl)
-		// 	if err != nil {
-		// 		log.Error.Println("error fetching star url:", err)
-		// 		return
-		// 	}
 	}
 
 	for {
