@@ -19,9 +19,7 @@ CREATE TABLE IF NOT EXISTS site_defs (
 	title_regexp 	text 		NOT NULL DEFAULT '(.+)',
 	date_xpath 		text 		NOT NULL DEFAULT '',
 	date_regexp 	text 		NOT NULL DEFAULT '(.+)',
-	date_format 	text 		NOT NULL DEFAULT '',
-	next_page_xpath text		NOT NULL DEFAULT '//a[@rel="next"]/@href',
-	next_page_regexp text		NOT NULL DEFAULT '([^/]+)/?$'
+	date_format 	text 		NOT NULL DEFAULT ''
 );
 
 CREATE INDEX IF NOT EXISTS site_defs_last_checked_idx ON site_defs (last_checked);
@@ -40,29 +38,27 @@ CREATE INDEX IF NOT EXISTS site_updates_published_idx ON site_updates(published)
 `
 
 type SiteDef struct {
-	ID          	int64
-	Name        	string
-	Active      	bool
-	NSFW        	bool
-	StartURL    	string
-	LastChecked 	time.Time
-	URLTemplate 	string
-	RefXpath    	string
-	RefRegexp   	string
-	TitleXpath  	string
-	TitleRegexp 	string
-	DateXpath   	string
-	DateRegexp  	string
-	DateFormat  	string
-	NextPageXpath 	string
-	NextPageRegexp 	string
+	ID          int64
+	Name        string
+	Active      bool
+	NSFW        bool
+	StartURL    string
+	LastChecked time.Time
+	URLTemplate string
+	RefXpath    string
+	RefRegexp   string
+	TitleXpath  string
+	TitleRegexp string
+	DateXpath   string
+	DateRegexp  string
+	DateFormat  string
 }
 
 type SiteUpdate struct {
-	ID 			int64
-	SiteDefID 	int64
-	Ref       	string
-	URL       	string
-	Title     	string
-	Published   time.Time
+	ID        int64
+	SiteDefID int64
+	Ref       string
+	URL       string
+	Title     string
+	Published time.Time
 }

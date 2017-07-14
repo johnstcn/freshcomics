@@ -1,12 +1,12 @@
 package models
 
 import (
-	"os"
 	"database/sql"
+	"os"
 
-	_ "github.com/lib/pq"
-	"github.com/jmoiron/sqlx"
 	"github.com/azer/snakecase"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 
 	"github.com/johnstcn/freshcomics/crawler/log"
 )
@@ -90,17 +90,15 @@ func (d *DAO) SaveSiteDef(sd *SiteDef) error {
 		title_regexp,
 		date_xpath,
 		date_regexp,
-		date_format,
-		next_page_xpath,
-		next_page_regexp
-	) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) WHERE id = $16;`
+		date_format
+	) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) WHERE id = $14;`
 	tx, err := d.DB.Beginx()
 	if err != nil {
 		return err
 	}
 	_, err = tx.Exec(stmt, sd.Name, sd.Active, sd.NSFW, sd.StartURL, sd.LastChecked,
 		sd.URLTemplate, sd.RefXpath, sd.RefRegexp, sd.TitleXpath, sd.TitleRegexp,
-		sd.DateXpath, sd.DateRegexp, sd.DateFormat, sd.NextPageXpath, sd.NextPageRegexp, sd.ID)
+		sd.DateXpath, sd.DateRegexp, sd.DateFormat, sd.ID)
 	if err != nil {
 		return err
 	}
@@ -170,7 +168,22 @@ func (d *DAO) GetSiteUpdateBySiteDefAndRef(sd *SiteDef, ref string) (*SiteUpdate
 	return &update, nil
 }
 
-func GetDAO() (*DAO) {
+// GetStartURLForCrawl returns the URL of the latest SiteUpdate if present,
+// and nil otherwise (no SiteUpdates for SiteDef).
+func (d *DAO) GetStartURLForCrawl(sd *SiteDef) (string, error) {
+	var nextUrl string
+	stmt := `SELECT URL FROM site_updates WHERE site_def_id = $1 ORDER BY Published DESC LIMIT 1;`
+	err := d.DB.Get(&nextUrl, stmt, sd.ID)
+
+	if err != nil {
+		log.Info.Println("Error fetching latest URL for SiteDef:", err)
+		return "", err
+	}
+
+	return nextUrl, nil
+}
+
+func GetDAO() *DAO {
 	if dao == nil {
 		dsn := os.Getenv("DATABASE_URL")
 		db := sqlx.MustConnect("postgres", dsn)
@@ -181,4 +194,3 @@ func GetDAO() (*DAO) {
 	}
 	return dao
 }
-

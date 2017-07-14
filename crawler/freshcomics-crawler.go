@@ -9,7 +9,6 @@ import (
 )
 
 var DEFAULT_CHECK_INTERVAL = 60 * time.Minute
-var DEFAULT_FULL_CRAWL = false
 
 func main() {
 	dao := models.GetDAO()
@@ -21,7 +20,7 @@ func main() {
 		if def != nil {
 			shouldCheck := time.Now().Sub(def.LastChecked) > DEFAULT_CHECK_INTERVAL
 			if shouldCheck {
-				go util.Crawl(def, DEFAULT_FULL_CRAWL)
+				go util.Crawl(def)
 			}
 		}
 		time.Sleep(tick)
