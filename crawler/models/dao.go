@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
-	"github.com/johnstcn/freshcomics/crawler/log"
+	"github.com/johnstcn/freshcomics/common/log"
 )
 
 var dao *DAO

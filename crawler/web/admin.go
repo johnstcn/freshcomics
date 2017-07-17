@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/johnstcn/freshcomics/crawler/log"
+	"github.com/johnstcn/freshcomics/common/log"
 	"github.com/johnstcn/freshcomics/crawler/models"
 	"github.com/johnstcn/freshcomics/crawler/util"
 )

@@ -10,6 +10,8 @@ import (
 	"github.com/azer/snakecase"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+
+	"github.com/johnstcn/freshcomics/common/log"
 )
 
 var db *sqlx.DB
@@ -24,7 +26,7 @@ type comic struct {
 func getDB() {
 	dsn := os.Getenv("DATABASE_URL")
 	db = sqlx.MustConnect("postgres", dsn)
-	fmt.Println("connected to database")
+	log.Info.Println("connected to database")
 	db.MapperFunc(snakecase.SnakeCase)
 }
 

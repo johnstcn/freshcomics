@@ -14,7 +14,7 @@ import (
 	"golang.org/x/net/html/charset"
 	"gopkg.in/xmlpath.v2"
 
-	"github.com/johnstcn/freshcomics/crawler/log"
+	"github.com/johnstcn/freshcomics/common/log"
 	"github.com/johnstcn/freshcomics/crawler/models"
 )
 
