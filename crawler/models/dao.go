@@ -41,9 +41,9 @@ func (d *DAO) CreateSiteDef() (*SiteDef, error) {
 func (d *DAO) GetAllSiteDefs(includeInactive bool) (*[]SiteDef, error) {
 	var stmt string
 	if includeInactive {
-		stmt = `SELECT * FROM site_defs;`
+		stmt = `SELECT * FROM site_defs ORDER BY name ASC;`
 	} else {
-		stmt = `SELECT * FROM site_defs WHERE active = TRUE;`
+		stmt = `SELECT * FROM site_defs WHERE active = TRUE ORDER BY NAME ASC;`
 	}
 	defs := make([]SiteDef, 0)
 	err := d.DB.Select(&defs, stmt)
