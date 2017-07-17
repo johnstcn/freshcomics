@@ -11,7 +11,7 @@ import (
 	"github.com/johnstcn/freshcomics/crawler/log"
 )
 
-var dao *DAO = nil
+var dao *DAO
 
 // DAO wraps a DB and provides data accessor methods for models
 type DAO struct {
