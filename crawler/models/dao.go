@@ -9,6 +9,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/johnstcn/freshcomics/common/log"
+
 )
 
 var dao *DAO
@@ -176,7 +177,7 @@ func (d *DAO) GetStartURLForCrawl(sd *SiteDef) (string, error) {
 	err := d.DB.Get(&nextUrl, stmt, sd.ID)
 
 	if err != nil {
-		log.Info.Println("Error fetching latest URL for SiteDef:", err)
+		log.Info("Error fetching latest URL for SiteDef:", err)
 		return "", err
 	}
 
@@ -187,7 +188,7 @@ func GetDAO() *DAO {
 	if dao == nil {
 		dsn := os.Getenv("DATABASE_URL")
 		db := sqlx.MustConnect("postgres", dsn)
-		log.Info.Println("Connected to database")
+		log.Info("Connected to database")
 		db.MustExec(schema)
 		db.MapperFunc(snakecase.SnakeCase)
 		dao = &DAO{DB: db}

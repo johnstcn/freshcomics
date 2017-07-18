@@ -86,7 +86,7 @@ func DecodeHTMLString(r io.Reader) (io.Reader, error) {
 
 // FetchPage fetches and parses the given URL and returns the DOM.
 func FetchPage(url string) (*xmlpath.Node, error) {
-	log.Info.Println("GET", url)
+	log.Info("GET", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get %s failed", url)
@@ -117,7 +117,7 @@ func FetchPage(url string) (*xmlpath.Node, error) {
 // Crawl runs an incremental crawl of sd.
 func Crawl(sd *models.SiteDef) {
 	dao := models.GetDAO()
-	log.Info.Printf("start crawl: %s", sd.Name)
+	log.Info("start crawl:", sd.Name)
 
 	start := time.Now()
 	sd.LastChecked = start
@@ -130,20 +130,20 @@ func Crawl(sd *models.SiteDef) {
 	pageUrl, _ = dao.GetStartURLForCrawl(sd)
 	// on the first crawl, persist SiteUpdate found on that page
 	if pageUrl == "" {
-		log.Info.Println("initial crawl")
+		log.Info("initial crawl")
 		pageUrl = sd.StartURL
 	}
 
 	for {
 		page, err = FetchPage(pageUrl)
 		if err != nil {
-			log.Error.Println("error fetching page:", err)
+			log.Error("error fetching page:", err)
 			break
 		}
 
 		newUpdate, err := NewSiteUpdateFromPage(sd, pageUrl, page)
 		if err != nil {
-			log.Error.Println("error creating new SiteUpdate from pageUrl:", err)
+			log.Error("error creating new SiteUpdate from pageUrl:", err)
 			break
 		}
 
@@ -151,7 +151,7 @@ func Crawl(sd *models.SiteDef) {
 		if existingUpdate == nil {
 			err = dao.CreateSiteUpdate(newUpdate)
 			if err != nil {
-				log.Error.Println("error persisting new SiteUpdate:", err)
+				log.Error("error persisting new SiteUpdate:", err)
 				break
 			}
 		}
@@ -159,18 +159,18 @@ func Crawl(sd *models.SiteDef) {
 		// pagination
 		nextPageUrl, err := GetNextPageURL(sd, page)
 		if err != nil {
-			log.Error.Println("error getting next page url:", err)
+			log.Error("error getting next page url:", err)
 			break
 		}
 		if pageUrl == nextPageUrl {
-			log.Error.Println("loop detected, check next page xpath")
+			log.Error("loop detected, check next page xpath")
 			break
 		}
 		pageUrl = nextPageUrl
 	}
 
 	elapsed := time.Now().Sub(start)
-	log.Info.Printf("end crawl: %s (%v)", sd.Name, elapsed)
+	log.Info("end crawl:", sd.Name, elapsed)
 	return
 }
 

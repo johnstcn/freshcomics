@@ -26,7 +26,7 @@ type comic struct {
 func getDB() {
 	dsn := os.Getenv("DATABASE_URL")
 	db = sqlx.MustConnect("postgres", dsn)
-	log.Info.Println("connected to database")
+	log.Info("connected to database")
 	db.MapperFunc(snakecase.SnakeCase)
 }
 

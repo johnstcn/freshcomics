@@ -27,12 +27,12 @@ func siteDefsHandler(resp http.ResponseWriter, req *http.Request) {
 	dao := models.GetDAO()
 	defs, err := dao.GetAllSiteDefs(true)
 	if err != nil {
-		log.Error.Println(err)
+		log.Error(err)
 	}
 	//tpl := getTemplate("admin_index.gohtml")
 	err = tpl.ExecuteTemplate(resp, "admin_index", &defs)
 	if err != nil {
-		log.Error.Println("could not execute template:", err)
+		log.Error("could not execute template:", err)
 	}
 }
 
@@ -48,15 +48,15 @@ func newSiteDefHandler(resp http.ResponseWriter, req *http.Request) {
 		name := req.PostFormValue("name")
 		def, err := dao.CreateSiteDef()
 		if err != nil {
-			log.Error.Println(err)
+			log.Error(err)
 		}
 		def.Name = name
 		err = dao.SaveSiteDef(def)
 		if err != nil {
-			log.Error.Println(err)
+			log.Error(err)
 		}
 		rdir := fmt.Sprintf("/sitedef?id=%d", def.ID)
-		log.Info.Println("Redirecting to", rdir)
+		log.Info("Redirecting to", rdir)
 		http.Redirect(resp, req, rdir, 302)
 	} else {
 		http.Redirect(resp, req, "/", 302)
@@ -67,12 +67,12 @@ func detailsHandler(resp http.ResponseWriter, req *http.Request) {
 	dao := models.GetDAO()
 	id, err := strconv.Atoi(req.URL.Query().Get("id"))
 	if err != nil {
-		log.Error.Println(err)
+		log.Error(err)
 		http.Redirect(resp, req, "/", 500)
 	}
 	def, err := dao.GetSiteDefByID(int64(id))
 	if err != nil {
-		log.Error.Println(err)
+		log.Error(err)
 		http.Redirect(resp, req, "/", 404)
 	}
 	r := &detailsResponse{
@@ -99,13 +99,13 @@ func detailsHandler(resp http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			r.Success = false
 			r.Message = err.Error()
-			log.Error.Println(err)
+			log.Error(err)
 		}
 	}
 	//tpl := getTemplate("admin_details.gohtml")
 	err = tpl.ExecuteTemplate(resp, "admin_details", r)
 	if err != nil {
-		log.Error.Println("could not execute template:", err)
+		log.Error("could not execute template:", err)
 	}
 }
 
@@ -138,8 +138,8 @@ func ServeAdmin() {
 	http.HandleFunc("/sitedef", detailsHandler)
 	http.HandleFunc("/sitedef/new", newSiteDefHandler)
 	http.HandleFunc("/sitedef/test", testHandler)
-	log.Info.Printf("Listening on %s", listenAddress)
-	log.Info.Fatal(http.ListenAndServe(listenAddress, http.DefaultServeMux))
+	log.Info("Listening on %s", listenAddress)
+	log.Error(http.ListenAndServe(listenAddress, http.DefaultServeMux))
 }
 
 func initTemplates() {
