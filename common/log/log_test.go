@@ -2,42 +2,45 @@ package log
 
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
 	"bytes"
-	"io/ioutil"
+	"errors"
+	"os"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-var debugBuf, infoBuf, errorBuf *bytes.Buffer
-var testMsg string = "test message"
+var debugBuf, infoBuf, errorBuf bytes.Buffer
+var testMsg string = "test message:"
 
-func Test_Debug(t *testing.T) {
-	expected := "[DEBUG] test message"
+func TestDebug(t *testing.T) {
+	testErr := errors.New("something happened")
 	debugBuf.Reset()
-	Debug(testMsg)
-	result, err := ioutil.ReadAll(debugBuf)
-	assert.NotNil(t, err)
-	assert.EqualValues(t, result, expected)
+	Debug(testMsg, testErr)
+	result, err := debugBuf.ReadString('\n')
+	assert.Nil(t, err)
+	assert.NotEqual(t, "", result)
 }
 
-func Test_Info(t *testing.T) {
-	expected := "[INFO] test message"
+func TestInfo(t *testing.T) {
+	testErr := errors.New("something happened")
 	infoBuf.Reset()
-	Info(testMsg)
-	result, err := ioutil.ReadAll(infoBuf)
-	assert.NotNil(t, err)
-	assert.EqualValues(t, result, expected)
+	Info(testMsg, testErr)
+	result, err := infoBuf.ReadString('\n')
+	assert.Nil(t, err)
+	assert.NotEqual(t, "", result)
 }
 
-func Test_Error(t *testing.T) {
-	expected := "[ERROR] test message"
+func TestError(t *testing.T) {
+	testErr := errors.New("something happened")
 	errorBuf.Reset()
-	Error(testMsg)
-	result, err := ioutil.ReadAll(errorBuf)
-	assert.NotNil(t, err)
-	assert.EqualValues(t, result, expected)
+	Error(testMsg, testErr)
+	result, err := errorBuf.ReadString('\n')
+	assert.Nil(t, err)
+	assert.NotEqual(t, "", result)
 }
 
 func TestMain(m *testing.M) {
-	setupLogger(debugBuf, infoBuf, errorBuf)
+	setupLogger(&debugBuf, &infoBuf, &errorBuf)
+	os.Exit(m.Run())
 }
