@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -132,13 +131,13 @@ func testHandler(resp http.ResponseWriter, req *http.Request) {
 	enc.Encode(res)
 }
 
-func ServeAdmin() {
-	listenAddress := os.Getenv("HOSTPORT")
+func ServeAdmin(host, port string) {
+	listenAddress := fmt.Sprintf("%s:%s", host, port)
 	http.HandleFunc("/", siteDefsHandler)
 	http.HandleFunc("/sitedef", detailsHandler)
 	http.HandleFunc("/sitedef/new", newSiteDefHandler)
 	http.HandleFunc("/sitedef/test", testHandler)
-	log.Info("Listening on %s", listenAddress)
+	log.Info("Listening on", listenAddress)
 	log.Error(http.ListenAndServe(listenAddress, http.DefaultServeMux))
 }
 

@@ -186,7 +186,7 @@ func (d *BackendDAO) GetStartURLForCrawl(sd *SiteDef) (string, error) {
 
 func GetDAO() *BackendDAO {
 	if dao == nil {
-		dsn := os.Getenv("DATABASE_URL")
+		dsn := os.Getenv("DSN")
 		db := sqlx.MustConnect("postgres", dsn)
 		log.Info("Connected to database")
 		db.MustExec(schema)

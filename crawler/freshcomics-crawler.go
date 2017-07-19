@@ -8,6 +8,7 @@ import (
 	"github.com/johnstcn/freshcomics/crawler/models"
 	"github.com/johnstcn/freshcomics/crawler/util"
 	"github.com/johnstcn/freshcomics/crawler/web"
+	"os"
 )
 
 var DEFAULT_CHECK_INTERVAL = 60 * time.Minute
@@ -15,7 +16,7 @@ var DEFAULT_CHECK_INTERVAL = 60 * time.Minute
 func main() {
 	dao := models.GetDAO()
 	defer dao.DB.Close()
-	go web.ServeAdmin()
+	go web.ServeAdmin(os.Getenv("HOST"), os.Getenv("PORT"))
 	for {
 		tick := 1 * time.Second
 		def, _ := dao.GetSiteDefLastChecked()
