@@ -19,7 +19,7 @@ type FrontendDAO struct {
 
 func GetDAO() *FrontendDAO {
 	if dao == nil {
-		dsn := os.Getenv("DATABASE_URL")
+		dsn := os.Getenv("DSN")
 		db := sqlx.MustConnect("postgres", dsn)
 		log.Info("Connected to database")
 		db.MapperFunc(snakecase.SnakeCase)
