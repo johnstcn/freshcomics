@@ -8,13 +8,27 @@ import (
 	"github.com/johnstcn/freshcomics/common/log"
 	"github.com/johnstcn/freshcomics/frontend/models"
 	"github.com/dustin/go-humanize"
+	"time"
 )
 
 var tpl *template.Template
+var comics *[]models.Comic
+
+func updateComics() {
+	for {
+		log.Info("updating comic list")
+		dao := models.GetDAO()
+		newComics, err := dao.GetComics()
+		if err != nil {
+			log.Error("could not update comic list:", err)
+		} else {
+			comics = newComics
+		}
+		time.Sleep(10 * time.Second)
+	}
+}
 
 func indexHandler(resp http.ResponseWriter, req *http.Request) {
-	dao := models.GetDAO()
-	comics, _ := dao.GetComics()
 	data := struct{
 		Comics *[]models.Comic
 	}{
@@ -46,4 +60,5 @@ func initTemplates() {
 
 func init() {
 	initTemplates()
+	go updateComics()
 }
