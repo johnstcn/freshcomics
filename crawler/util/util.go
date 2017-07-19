@@ -39,7 +39,7 @@ func ApplyRegex(input, expr string) (string, error) {
 func ApplyXPath(page *xmlpath.Node, xpath string) (string, error) {
 	xp, err := xmlpath.Compile(xpath)
 	if err != nil {
-		return "", err
+		return "", errors.New(fmt.Sprintf("invalid xpath: %s", xpath))
 	}
 
 	value, ok := xp.String(page)
@@ -88,7 +88,7 @@ func DecodeHTMLString(r io.Reader) (io.Reader, error) {
 func FetchPage(url string) (*xmlpath.Node, error) {
 	log.Info("GET", url)
 	resp, err := http.Get(url)
-	if err != nil {
+	if resp == nil || err != nil {
 		return nil, errors.Wrapf(err, "get %s failed", url)
 	}
 	defer resp.Body.Close()
