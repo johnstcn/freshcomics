@@ -2,13 +2,12 @@ package web
 
 import (
 	"fmt"
-	"encoding/json"
 	"html/template"
 	"net/http"
-	"time"
 
 	"github.com/johnstcn/freshcomics/common/log"
 	"github.com/johnstcn/freshcomics/frontend/models"
+	"github.com/dustin/go-humanize"
 )
 
 var tpl *template.Template
@@ -16,9 +15,15 @@ var tpl *template.Template
 func indexHandler(resp http.ResponseWriter, req *http.Request) {
 	dao := models.GetDAO()
 	comics, _ := dao.GetComics()
-	enc := json.NewEncoder(resp)
-	enc.SetIndent("", "\t")
-	enc.Encode(comics)
+	data := struct{
+		Comics *[]models.Comic
+	}{
+		Comics: comics,
+	}
+	err := tpl.ExecuteTemplate(resp, "frontend_index", &data)
+	if err != nil {
+		log.Error("could not execute frontend_index template:", err)
+	}
 }
 
 func ServeFrontend(host, port string) {
@@ -28,21 +33,17 @@ func ServeFrontend(host, port string) {
 	http.ListenAndServe(listenAddress, http.DefaultServeMux)
 }
 
-func humanDuration(t time.Time) string {
-	suffix := "ago"
-	now := time.Now()
-	delta := now.Sub(t)
-	if t.After(now) {
-		// never know when time will get weird
-		suffix = "from now"
-	}
-	return fmt.Sprintf("%v %s", delta, suffix)
-}
-
 func initTemplates() {
 	fm := template.FuncMap{
-		"humanDuration": humanDuration,
+		"humanDuration": humanize.Time,
 	}
 	tpl = template.New("").Funcs(fm)
+	for _, an := range AssetNames() {
+		tpl.Parse(string(MustAsset(an)))
+		log.Debug("template init:", an)
+	}
+}
 
+func init() {
+	initTemplates()
 }
