@@ -12,15 +12,15 @@ import (
 
 )
 
-var dao *DAO
+var dao *BackendDAO
 
-// DAO wraps a DB and provides data accessor methods for models
-type DAO struct {
+// BackendDAO wraps a DB and provides data accessor methods for models
+type BackendDAO struct {
 	DB *sqlx.DB
 }
 
 // CreateSiteDef creates a new SiteDef with default values
-func (d *DAO) CreateSiteDef() (*SiteDef, error) {
+func (d *BackendDAO) CreateSiteDef() (*SiteDef, error) {
 	var newid int64
 	stmt := `INSERT INTO site_defs DEFAULT VALUES RETURNING id;`
 	tx, err := d.DB.Beginx()
@@ -39,7 +39,7 @@ func (d *DAO) CreateSiteDef() (*SiteDef, error) {
 }
 
 // GetAllSiteDefs returns all SiteDefs.
-func (d *DAO) GetAllSiteDefs(includeInactive bool) (*[]SiteDef, error) {
+func (d *BackendDAO) GetAllSiteDefs(includeInactive bool) (*[]SiteDef, error) {
 	var stmt string
 	if includeInactive {
 		stmt = `SELECT * FROM site_defs ORDER BY name ASC;`
@@ -55,7 +55,7 @@ func (d *DAO) GetAllSiteDefs(includeInactive bool) (*[]SiteDef, error) {
 }
 
 // GetSiteDefByID returns a SiteDef with the given ID.
-func (d *DAO) GetSiteDefByID(id int64) (*SiteDef, error) {
+func (d *BackendDAO) GetSiteDefByID(id int64) (*SiteDef, error) {
 	stmt := `SELECT * FROM site_defs WHERE id = $1;`
 	def := SiteDef{}
 	err := d.DB.Get(&def, stmt, id)
@@ -66,7 +66,7 @@ func (d *DAO) GetSiteDefByID(id int64) (*SiteDef, error) {
 }
 
 // GetSiteDefLastChecked returns the SiteDef with the oldest last_checked timestamp.
-func (d *DAO) GetSiteDefLastChecked() (*SiteDef, error) {
+func (d *BackendDAO) GetSiteDefLastChecked() (*SiteDef, error) {
 	stmt := `SELECT * FROM site_defs ORDER BY last_checked ASC LIMIT 1;`
 	def := SiteDef{}
 	err := d.DB.Get(&def, stmt)
@@ -77,7 +77,7 @@ func (d *DAO) GetSiteDefLastChecked() (*SiteDef, error) {
 }
 
 // SaveSiteDef persists changes to a SiteDef.
-func (d *DAO) SaveSiteDef(sd *SiteDef) error {
+func (d *BackendDAO) SaveSiteDef(sd *SiteDef) error {
 	stmt := `UPDATE site_defs SET (
 		name,
 		active,
@@ -111,7 +111,7 @@ func (d *DAO) SaveSiteDef(sd *SiteDef) error {
 }
 
 // SetSiteDefLastCheckedNow sets the last_checked of a SiteDef to now.
-func (d *DAO) SetSiteDefLastCheckedNow(sd *SiteDef) error {
+func (d *BackendDAO) SetSiteDefLastCheckedNow(sd *SiteDef) error {
 	stmt := `UPDATE site_defs SET last_checked = CURRENT_TIMESTAMP WHERE id = $1;`
 	tx, err := d.DB.Beginx()
 	if err != nil {
@@ -129,7 +129,7 @@ func (d *DAO) SetSiteDefLastCheckedNow(sd *SiteDef) error {
 }
 
 // CreateSiteUpdate persists a new SiteUpdate.
-func (d *DAO) CreateSiteUpdate(su *SiteUpdate) error {
+func (d *BackendDAO) CreateSiteUpdate(su *SiteUpdate) error {
 	stmt := `INSERT INTO site_updates (site_def_id, ref, url, title, published)
 	VALUES ($1, $2, $3, $4, $5);`
 	tx, err := d.DB.Beginx()
@@ -148,7 +148,7 @@ func (d *DAO) CreateSiteUpdate(su *SiteUpdate) error {
 }
 
 // GetSiteUpdatesBySiteDef returns all SiteUpdates related to the SiteDef.
-func (d *DAO) GetSiteUpdatesBySiteDef(sd *SiteDef) (*[]SiteUpdate, error) {
+func (d *BackendDAO) GetSiteUpdatesBySiteDef(sd *SiteDef) (*[]SiteUpdate, error) {
 	updates := make([]SiteUpdate, 0)
 	stmt := `SELECT * FROM site_updates WHERE site_def_id = $1;`
 	err := d.DB.Select(&updates, stmt, sd.ID)
@@ -159,7 +159,7 @@ func (d *DAO) GetSiteUpdatesBySiteDef(sd *SiteDef) (*[]SiteUpdate, error) {
 }
 
 // GetSiteUpdateBySiteDefAndRef returns a SiteUpdate with the given ref related to the given SiteDef.
-func (d *DAO) GetSiteUpdateBySiteDefAndRef(sd *SiteDef, ref string) (*SiteUpdate, error) {
+func (d *BackendDAO) GetSiteUpdateBySiteDefAndRef(sd *SiteDef, ref string) (*SiteUpdate, error) {
 	update := SiteUpdate{}
 	stmt := `SELECT * FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
 	err := d.DB.Select(&update, stmt, sd.ID, ref)
@@ -171,7 +171,7 @@ func (d *DAO) GetSiteUpdateBySiteDefAndRef(sd *SiteDef, ref string) (*SiteUpdate
 
 // GetStartURLForCrawl returns the URL of the latest SiteUpdate if present,
 // and nil otherwise (no SiteUpdates for SiteDef).
-func (d *DAO) GetStartURLForCrawl(sd *SiteDef) (string, error) {
+func (d *BackendDAO) GetStartURLForCrawl(sd *SiteDef) (string, error) {
 	var nextUrl string
 	stmt := `SELECT URL FROM site_updates WHERE site_def_id = $1 ORDER BY Published DESC LIMIT 1;`
 	err := d.DB.Get(&nextUrl, stmt, sd.ID)
@@ -184,14 +184,14 @@ func (d *DAO) GetStartURLForCrawl(sd *SiteDef) (string, error) {
 	return nextUrl, nil
 }
 
-func GetDAO() *DAO {
+func GetDAO() *BackendDAO {
 	if dao == nil {
 		dsn := os.Getenv("DATABASE_URL")
 		db := sqlx.MustConnect("postgres", dsn)
 		log.Info("Connected to database")
 		db.MustExec(schema)
 		db.MapperFunc(snakecase.SnakeCase)
-		dao = &DAO{DB: db}
+		dao = &BackendDAO{DB: db}
 	}
 	return dao
 }
