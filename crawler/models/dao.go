@@ -153,7 +153,7 @@ func (d *BackendDAO) CreateSiteUpdate(su *SiteUpdate) error {
 // GetSiteUpdatesBySiteDef returns all SiteUpdates related to the SiteDef.
 func (d *BackendDAO) GetSiteUpdatesBySiteDef(sd *SiteDef) (*[]SiteUpdate, error) {
 	updates := make([]SiteUpdate, 0)
-	stmt := `SELECT * FROM site_updates WHERE site_def_id = $1;`
+	stmt := `SELECT * FROM site_updates WHERE site_def_id = $1 ORDER BY published DESC;`
 	err := d.DB.Select(&updates, stmt, sd.ID)
 	if err != nil {
 		return nil, err
