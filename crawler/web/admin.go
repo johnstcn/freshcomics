@@ -33,6 +33,7 @@ func siteDefsHandler(resp http.ResponseWriter, req *http.Request) {
 
 type detailsResponse struct {
 	SiteDef *models.SiteDef
+	Events *[]models.CrawlEvent
 	Success bool
 	Message string
 }
@@ -71,8 +72,13 @@ func detailsHandler(resp http.ResponseWriter, req *http.Request) {
 		log.Error(err)
 		http.Redirect(resp, req, "/", 404)
 	}
+	events, err := dao.GetCrawlEventsBySiteDef(def, 100)
+	if err != nil {
+		log.Error(err)
+	}
 	r := &detailsResponse{
 		SiteDef: def,
+		Events: events,
 		Success: true,
 		Message: "",
 	}
