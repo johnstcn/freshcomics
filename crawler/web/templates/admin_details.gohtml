@@ -103,6 +103,13 @@
                     </div>
                 </div>
             </div>
+            <div class="panel panel-primary">
+                <div class="panel-body">
+                    <div class="form-group">
+                        <button id="crawl_button" class="btn btn-block btn-primary">Force Crawl</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div><!-- ./row -->
     </form>
@@ -157,7 +164,21 @@ function bindTestHandler() {
         });
     });
 }
+
+function bindForceCrawlHandler() {
+    $("#crawl_button").click(function() {
+        $.ajax({
+            method: "POST",
+            url: "/sitedef/crawl",
+            data: "id={{ .SiteDef.ID }}"
+        }).done(function() {
+            location.reload();
+        });
+    });
+}
+
 bindTestHandler();
+bindForceCrawlHandler();
 </script>
 {{ template "admin_footer" }}
 {{ end }}
