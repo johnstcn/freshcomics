@@ -153,8 +153,8 @@ func forceCrawlHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func ServeAdmin(host, port string) {
-	listenAddress := fmt.Sprintf("%s:%s", host, port)
+func ServeAdmin(host string, port int) {
+	listenAddress := fmt.Sprintf("%s:%d", host, port)
 	log.Info("Listening on", listenAddress)
 	log.Error(http.ListenAndServe(listenAddress, rtr))
 }

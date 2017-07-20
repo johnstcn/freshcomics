@@ -5,23 +5,24 @@ package main
 import (
 	"time"
 
+	"github.com/johnstcn/freshcomics/crawler/config"
 	"github.com/johnstcn/freshcomics/crawler/models"
 	"github.com/johnstcn/freshcomics/crawler/util"
 	"github.com/johnstcn/freshcomics/crawler/web"
-	"os"
 )
 
-var DEFAULT_CHECK_INTERVAL = 60 * time.Minute
+
 
 func main() {
+	tick := time.Duration(config.Cfg.CrawlDispatchSecs) * time.Second
+	checkInterval := time.Duration(config.Cfg.CheckIntervalSecs) * time.Second
 	dao := models.GetDAO()
 	defer dao.DB.Close()
-	go web.ServeAdmin(os.Getenv("HOST"), os.Getenv("PORT"))
+	go web.ServeAdmin(config.Cfg.Host, config.Cfg.Port)
 	for {
-		tick := 1 * time.Second
 		def, _ := dao.GetSiteDefLastChecked()
 		if def != nil {
-			shouldCheck := time.Now().Sub(def.LastChecked) > DEFAULT_CHECK_INTERVAL
+			shouldCheck := time.Now().Sub(def.LastChecked) > checkInterval
 			if shouldCheck {
 				go util.Crawl(def)
 			}

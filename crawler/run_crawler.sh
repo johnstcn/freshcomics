@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
-#DATABASE_URL='freshcomics:freshcomics_password@tcp(localhost:5432)/freshcomicsdb?charset=utf8&parseTime=True&loc=Local&sslmode=disable' go run main.go
-VERBOSE=1 HOST='localhost' PORT='8080' DSN='host=localhost user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable' gin
+export FRESHCOMICS_CRAWLER_DEBUG=true
+export FRESHCOMICS_CRAWLER_HOST=localhost
+export FRESHCOMICS_CRAWLER_PORT=3000
+export FRESHCOMICS_CRAWLER_DSN='host=localhost user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable'
+go run freshcomics-crawler.go

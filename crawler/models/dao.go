@@ -2,18 +2,17 @@ package models
 
 import (
 	"database/sql"
-	"os"
+	"encoding/json"
+	"errors"
+	"strconv"
+	"time"
 
 	"github.com/azer/snakecase"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
+	"github.com/johnstcn/freshcomics/crawler/config"
 	"github.com/johnstcn/freshcomics/common/log"
-
-	"strconv"
-	"time"
-	"errors"
-	"encoding/json"
 )
 
 var dao *BackendDAO
@@ -231,7 +230,7 @@ func (d *BackendDAO) CreateCrawlEvent(sd *SiteDef, eventType, eventInfo interfac
 
 func GetDAO() *BackendDAO {
 	if dao == nil {
-		dsn := os.Getenv("DSN")
+		dsn := config.Cfg.DSN
 		db := sqlx.MustConnect("postgres", dsn)
 		log.Info("Connected to database")
 		db.MustExec(schema)
