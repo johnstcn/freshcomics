@@ -10,6 +10,7 @@ import (
 
 	"github.com/johnstcn/freshcomics/common/log"
 
+	"strconv"
 )
 
 var dao *BackendDAO
@@ -162,7 +163,7 @@ func (d *BackendDAO) GetSiteUpdatesBySiteDef(sd *SiteDef) (*[]SiteUpdate, error)
 func (d *BackendDAO) GetSiteUpdateBySiteDefAndRef(sd *SiteDef, ref string) (*SiteUpdate, error) {
 	update := SiteUpdate{}
 	stmt := `SELECT * FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
-	err := d.DB.Select(&update, stmt, sd.ID, ref)
+	err := d.DB.Get(&update, stmt, strconv.FormatInt(sd.ID, 10), ref)
 	if err != nil {
 		return nil, err
 	}

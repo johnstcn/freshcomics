@@ -154,16 +154,18 @@ func Crawl(sd *models.SiteDef) {
 				log.Error("error persisting new SiteUpdate:", err)
 				break
 			}
+		} else {
+			log.Info("already seen:", newUpdate.Ref)
 		}
 
 		// pagination
 		nextPageUrl, err := GetNextPageURL(sd, page)
 		if err != nil {
-			log.Error("error getting next page url:", err)
+			log.Info("stopping pagination:", err)
 			break
 		}
 		if pageUrl == nextPageUrl {
-			log.Error("loop detected, check next page xpath")
+			log.Error("pagination loop detected")
 			break
 		}
 		pageUrl = nextPageUrl
