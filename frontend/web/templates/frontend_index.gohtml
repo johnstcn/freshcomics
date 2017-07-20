@@ -7,10 +7,7 @@
                 <time>{{ .Published | humanDuration }}</time>
                 <a target="_blank" href="/view/{{ .ID }}">
                     <h3>{{ .Name }}
-                    {{ if .NSFW }}
-                        <sup class="nsfw">NSFW</sup>
-                    {{ end }}
-                    </h3>
+                    {{ if .NSFW }}<sup class="nsfw">NSFW</sup>{{ end }}</h3>
                     <em>{{ .Title }}</em>
                 </a>
                 <div style="clear: both;"></div>

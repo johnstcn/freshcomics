@@ -10,6 +10,10 @@ import (
 	"github.com/dustin/go-humanize"
 	"time"
 	"github.com/gorilla/mux"
+	"github.com/tdewolff/minify"
+	"github.com/tdewolff/minify/html"
+	"github.com/tdewolff/minify/css"
+	"strings"
 )
 
 var tpl *template.Template
@@ -54,6 +58,22 @@ func redirectHandler(resp http.ResponseWriter, req *http.Request) {
 	http.Redirect(resp, req, url, 301)
 }
 
+func cssHandler(resp http.ResponseWriter, req *http.Request) {
+	m := minify.New()
+	m.AddFunc("text/css", css.Minify)
+	log.Debug(req.RequestURI)
+	css, err := Asset(strings.TrimLeft(req.RequestURI, "/"))
+	if err != nil {
+		log.Error(err)
+	}
+	minified, err := m.Bytes("text/css", css)
+	if err != nil {
+		log.Error("unable to minify css:", err)
+	}
+	resp.Header().Add("Content-Type", "text/css")
+	resp.Write(minified)
+}
+
 func ServeFrontend(host, port string) {
 	listenAddress := fmt.Sprintf("%s:%s", host, port)
 	log.Info("Listening on", listenAddress)
@@ -61,12 +81,23 @@ func ServeFrontend(host, port string) {
 }
 
 func initTemplates() {
+	m := minify.New()
+	m.AddFunc("text/html", html.Minify)
 	fm := template.FuncMap{
 		"humanDuration": humanize.Time,
 	}
 	tpl = template.New("").Funcs(fm)
 	for _, an := range AssetNames() {
-		tpl.Parse(string(MustAsset(an)))
+		// only minify html here
+		if !strings.HasSuffix(an, ".gohtml") {
+			continue
+		}
+		s := MustAsset(an)
+		ms, err := m.Bytes("text/html", s)
+		if err != nil {
+			log.Error("unable to minify template:", an)
+		}
+		tpl.Parse(string(ms))
 		log.Debug("template init:", an)
 	}
 }
@@ -75,6 +106,7 @@ func initRoutes() {
 	rtr = mux.NewRouter()
 	rtr.HandleFunc("/", indexHandler)
 	rtr.HandleFunc("/view/{id:[0-9]+}", redirectHandler)
+	rtr.HandleFunc("/style.css", cssHandler)
 }
 
 func init() {
