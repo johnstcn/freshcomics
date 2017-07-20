@@ -1,8 +1,11 @@
 package config
 
 import (
-	"log"
+	"os"
+
 	"github.com/kelseyhightower/envconfig"
+
+	"github.com/johnstcn/freshcomics/common/log"
 )
 
 type Config struct {
@@ -20,6 +23,13 @@ var Cfg Config
 func init() {
 	err := envconfig.Process("freshcomics_crawler", &Cfg)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Error(err.Error())
+		os.Exit(1)
 	}
+	log.Info("[config] Debug:", Cfg.Debug)
+	log.Info("[config] Host:", Cfg.Host)
+	log.Info("[config] Port:", Cfg.Port)
+	log.Info("[config] CheckIntervalSecs:", Cfg.CheckIntervalSecs)
+	log.Info("[config] CrawlDispatchSecs:", Cfg.CrawlDispatchSecs)
+	log.Info("[config] Backoff:", Cfg.Backoff)
 }
