@@ -11,23 +11,37 @@
         {{ end }}
     {{ end }}
     <div class="row">
-    <div class="col-sm-12">
-        <div class="panel panel-primary">
-            <div class="panel-heading">Events</div>
+        <div class="col-sm-12">
             <details>
-            <table class="table-striped table-hover">
-            {{ range .Events }}
-            <tr><td>{{ .Created | datetime }}</td><td>{{ .EventType }}</td><td style="font-family: monospace;">{{ .EventInfo }}</td></tr>
-            {{ end }}
-            </table>
+            <summary style="font-size: 2em;">Events</summary>
+            <table class="table table-striped table-hover">
+                {{ range .Events }}
+                    <tr><td>{{ .Created | datetime }}</td><td>{{ .EventType }}</td><td style="font-family: monospace;">{{ .EventInfo }}</td></tr>
+                    {{ end }}
+                </table>
+                <a target="_blank" href="/sitedef/{{ .SiteDef.ID }}/events">View All</a>
             </details>
         </div>
     </div>
-    </div>
+    <hr />
     <div class="row">
-        <div class="col-sm-8">
-            <div class="panel panel-primary">
-                <div class="panel-heading">Definition</div>
+        <div class="col-sm-12">
+            <details>
+                <summary style="font-size: 2em;">Updates</summary>
+                <table class="table table-striped table-hover">
+                    {{ range .Updates }}
+                        <tr><td>{{ .Published | datetime }}</td><td>{{ .Title }}</td><td style="font-family: monospace;"><a target="_blank" href="{{ .URL }}">{{ .URL }}</a></td></tr>
+                    {{ end }}
+                </table>
+                <a target="_blank" href="/sitedef/{{ .SiteDef.ID }}/updates">View All</a>
+            </details>
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-sm-12">
+            <details>
+                <summary style="font-size: 2em;">Definition</summary>
                 <div class="panel-body">
                     <form method="POST" id="sitedef_form" action="/sitedef/{{ .SiteDef.ID }}">
                         <div class="form-group">
@@ -85,48 +99,50 @@
                         </div>
                     </form>
                 </div>
-            </div>
+            </details>
         </div>
-        <div class="col col-sm-4">
-            <div class="panel panel-default">
-                <div class="panel-heading">Test Results</div>
-                <div class="panel-body">
-                    <div class="alert alert-danger" id="test_error" style="display:none;"></div>
-                    <div class="form-group">
-                        <label class="control-label" for="test_ref">Ref:</label>
-                        <input class="form-control" type="text" id="test_ref">
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label" for="test_url">URL:</label>
-                        <input class="form-control" type="text" id="test_url">
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label" for="test_title">Title:</label>
-                        <input class="form-control" type="text" id="test_title">
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label" for="test_date">Date:</label>
-                        <input class="form-control" type="text" id="test_date">
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label" for="test_nextpage">Next Page URL:</label>
-                        <input class="form-control" type="text" id="test_nextpage">
-                    </div>
-                    <div class="form-group">
-                        <button id="test_button" class="btn btn-block btn-default">Test</button>
-                    </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-sm-12">
+            <details>
+                <summary style="font-size: 2em;">Test Results</summary>
+                <div class="alert alert-danger" id="test_error" style="display:none;"></div>
+                <div class="form-group">
+                    <label class="control-label" for="test_ref">Ref:</label>
+                    <input class="form-control" type="text" id="test_ref">
                 </div>
-            </div>
-            <div class="panel panel-primary">
-                <div class="panel-body">
-                    <div class="form-group">
-                        <button id="crawl_button" class="btn btn-block btn-primary">Force Crawl</button>
-                    </div>
+                <div class="form-group">
+                    <label class="control-label" for="test_url">URL:</label>
+                    <input class="form-control" type="text" id="test_url">
                 </div>
+                <div class="form-group">
+                    <label class="control-label" for="test_title">Title:</label>
+                    <input class="form-control" type="text" id="test_title">
+                </div>
+                <div class="form-group">
+                    <label class="control-label" for="test_date">Date:</label>
+                    <input class="form-control" type="text" id="test_date">
+                </div>
+                <div class="form-group">
+                    <label class="control-label" for="test_nextpage">Next Page URL:</label>
+                    <input class="form-control" type="text" id="test_nextpage">
+                </div>
+                <div class="form-group">
+                    <button id="test_button" class="btn btn-block btn-primary">Test</button>
+                </div>
+            </details>
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm-4">
+            <div class="form-group">
+                <button id="crawl_button" class="btn btn-block btn-primary">Force Crawl</button>
             </div>
         </div>
     </div><!-- ./row -->
-    </form>
 </div><!-- /.container -->
 <script type="text/javascript">
 function serializeForm() {

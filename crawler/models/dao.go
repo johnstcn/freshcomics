@@ -150,11 +150,17 @@ func (d *BackendDAO) CreateSiteUpdate(su *SiteUpdate) error {
 	return nil
 }
 
-// GetSiteUpdatesBySiteDef returns all SiteUpdates related to the SiteDef.
-func (d *BackendDAO) GetSiteUpdatesBySiteDef(sd *SiteDef) (*[]SiteUpdate, error) {
+// GetSiteUpdatesBySiteDefID returns all SiteUpdates related to the SiteDef.
+func (d *BackendDAO) GetSiteUpdatesBySiteDefID(sdid int64, limit int) (*[]SiteUpdate, error) {
+	var err error
 	updates := make([]SiteUpdate, 0)
-	stmt := `SELECT * FROM site_updates WHERE site_def_id = $1 ORDER BY published DESC;`
-	err := d.DB.Select(&updates, stmt, sd.ID)
+	if limit < 0 {
+		stmt := `SELECT * FROM site_updates WHERE site_def_id = $1 ORDER BY published DESC;`
+		err = d.DB.Select(&updates, stmt, sdid)
+	} else {
+		stmt := `SELECT * FROM site_updates WHERE site_def_id = $1 ORDER BY published DESC LIMIT $2;`
+		err = d.DB.Select(&updates, stmt, sdid, limit)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -187,20 +193,32 @@ func (d *BackendDAO) GetStartURLForCrawl(sd *SiteDef) (string, error) {
 	return nextUrl, nil
 }
 
-func (d *BackendDAO) GetCrawlEvents(sd *SiteDef, limit int) (*[]CrawlEvent, error) {
+func (d *BackendDAO) GetCrawlEvents(limit int) (*[]CrawlEvent, error) {
+	var err error
 	events := make([]CrawlEvent, 0)
-	stmt := `SELECT * FROM crawl_events ORDER BY created DESC LIMIT $1;`
-	err := d.DB.Select(&events, stmt, limit)
+	if limit < 0 {
+		stmt := `SELECT * FROM crawl_events ORDER BY created DESC;`
+		err = d.DB.Select(&events, stmt)
+	} else {
+		stmt := `SELECT * FROM crawl_events ORDER BY created DESC LIMIT $1;`
+		err = d.DB.Select(&events, stmt, limit)
+	}
 	if err != nil {
 		return nil, err
 	}
 	return &events, nil
 }
 
-func (d *BackendDAO) GetCrawlEventsBySiteDef(sd *SiteDef, limit int) (*[]CrawlEvent, error) {
+func (d *BackendDAO) GetCrawlEventsBySiteDefID(sdid int64, limit int) (*[]CrawlEvent, error) {
+	var err error
 	events := make([]CrawlEvent, 0)
-	stmt := `SELECT * FROM crawl_events WHERE site_def_id = $1 ORDER BY created DESC LIMIT $2;`
-	err := d.DB.Select(&events, stmt, sd.ID, limit)
+	if limit < 0 {
+		stmt := `SELECT * FROM crawl_events WHERE site_def_id = $1 ORDER BY created DESC;`
+		err = d.DB.Select(&events, stmt, sdid)
+	} else {
+		stmt := `SELECT * FROM crawl_events WHERE site_def_id = $1 ORDER BY created DESC LIMIT $2;`
+		err = d.DB.Select(&events, stmt, sdid, limit)
+	}
 	if err != nil {
 		return nil, err
 	}

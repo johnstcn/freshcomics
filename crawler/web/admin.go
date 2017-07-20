@@ -33,6 +33,7 @@ func siteDefsHandler(resp http.ResponseWriter, req *http.Request) {
 
 type detailsResponse struct {
 	SiteDef *models.SiteDef
+	Updates *[]models.SiteUpdate
 	Events *[]models.CrawlEvent
 	Success bool
 	Message string
@@ -72,12 +73,17 @@ func detailsHandler(resp http.ResponseWriter, req *http.Request) {
 		log.Error(err)
 		http.Redirect(resp, req, "/", 404)
 	}
-	events, err := dao.GetCrawlEventsBySiteDef(def, 100)
+	updates, err := dao.GetSiteUpdatesBySiteDefID(def.ID, 10)
+	if err != nil {
+		log.Error(err)
+	}
+	events, err := dao.GetCrawlEventsBySiteDefID(def.ID, 10)
 	if err != nil {
 		log.Error(err)
 	}
 	r := &detailsResponse{
 		SiteDef: def,
+		Updates: updates,
 		Events: events,
 		Success: true,
 		Message: "",
@@ -153,6 +159,32 @@ func forceCrawlHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func eventsHandler(resp http.ResponseWriter, req *http.Request) {
+	dao := models.GetDAO()
+	vars := mux.Vars(req)
+	defId, _ := strconv.Atoi(vars["id"])
+	events, err := dao.GetCrawlEventsBySiteDefID(int64(defId), -1)
+	if err != nil {
+		log.Error(err)
+	}
+	enc := json.NewEncoder(resp)
+	enc.SetIndent("", "\t")
+	enc.Encode(events)
+}
+
+func updatesHandler(resp http.ResponseWriter, req *http.Request) {
+	dao := models.GetDAO()
+	vars := mux.Vars(req)
+	defId, _ := strconv.Atoi(vars["id"])
+	updates, err := dao.GetSiteUpdatesBySiteDefID(int64(defId), -1)
+	if err != nil {
+		log.Error(err)
+	}
+	enc := json.NewEncoder(resp)
+	enc.SetIndent("", "\t")
+	enc.Encode(updates)
+}
+
 func ServeAdmin(host string, port int) {
 	listenAddress := fmt.Sprintf("%s:%d", host, port)
 	log.Info("Listening on", listenAddress)
@@ -163,6 +195,8 @@ func initRoutes() {
 	rtr = mux.NewRouter()
 	rtr.HandleFunc("/", siteDefsHandler)
 	rtr.HandleFunc("/sitedef/{id:[0-9]+}", detailsHandler)
+	rtr.HandleFunc("/sitedef/{id:[0-9]+}/events", eventsHandler)
+	rtr.HandleFunc("/sitedef/{id:[0-9]+}/updates", updatesHandler)
 	rtr.HandleFunc("/sitedef/new", newSiteDefHandler)
 	rtr.HandleFunc("/sitedef/test", testHandler)
 	rtr.HandleFunc("/sitedef/crawl", forceCrawlHandler)
