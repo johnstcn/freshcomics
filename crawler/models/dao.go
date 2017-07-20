@@ -11,6 +11,7 @@ import (
 	"github.com/johnstcn/freshcomics/common/log"
 
 	"strconv"
+	"time"
 )
 
 var dao *BackendDAO
@@ -111,14 +112,14 @@ func (d *BackendDAO) SaveSiteDef(sd *SiteDef) error {
 	return nil
 }
 
-// SetSiteDefLastCheckedNow sets the last_checked of a SiteDef to now.
-func (d *BackendDAO) SetSiteDefLastCheckedNow(sd *SiteDef) error {
-	stmt := `UPDATE site_defs SET last_checked = CURRENT_TIMESTAMP WHERE id = $1;`
+// SetSiteDefLastCheckedNow sets the last_checked of a SiteDef to the given time.
+func (d *BackendDAO) SetSiteDefLastChecked(sd *SiteDef, when time.Time) error {
+	stmt := `UPDATE site_defs SET last_checked = $1 WHERE id = $2;`
 	tx, err := d.DB.Beginx()
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(stmt, sd.ID)
+	_, err = tx.Exec(stmt, when, sd.ID)
 	if err != nil {
 		return err
 	}

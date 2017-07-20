@@ -128,6 +128,25 @@ func testHandler(resp http.ResponseWriter, req *http.Request) {
 	enc.Encode(res)
 }
 
+func forceCrawlHandler(resp http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodPost {
+		dao := models.GetDAO()
+		req.ParseForm()
+		defId, _ := strconv.Atoi(req.Form.Get("id"))
+		sd, err := dao.GetSiteDefByID(int64(defId))
+		if err != nil {
+			log.Error("unknown sitedef id:", err)
+			resp.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		dao.SetSiteDefLastChecked(sd, time.Unix(0, 0))
+		resp.WriteHeader(http.StatusOK)
+		log.Info("manual crawl initiated:", sd.Name)
+	} else {
+		resp.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
 func ServeAdmin(host, port string) {
 	listenAddress := fmt.Sprintf("%s:%s", host, port)
 	log.Info("Listening on", listenAddress)
@@ -140,6 +159,7 @@ func initRoutes() {
 	rtr.HandleFunc("/sitedef/{id:[0-9]+}", detailsHandler)
 	rtr.HandleFunc("/sitedef/new", newSiteDefHandler)
 	rtr.HandleFunc("/sitedef/test", testHandler)
+	rtr.HandleFunc("/sitedef/crawl", forceCrawlHandler)
 }
 
 func initTemplates() {

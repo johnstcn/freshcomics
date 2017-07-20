@@ -118,10 +118,8 @@ func FetchPage(url string) (*xmlpath.Node, error) {
 func Crawl(sd *models.SiteDef) {
 	dao := models.GetDAO()
 	log.Info("start crawl:", sd.Name)
-
 	start := time.Now()
-	sd.LastChecked = start
-	dao.SaveSiteDef(sd)
+	dao.SetSiteDefLastChecked(sd, start)
 
 	var page *xmlpath.Node
 	var pageUrl string
