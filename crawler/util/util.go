@@ -118,6 +118,7 @@ func FetchPage(url string) (*xmlpath.Node, error) {
 func Crawl(sd *models.SiteDef) {
 	dao := models.GetDAO()
 	log.Info("start crawl:", sd.Name)
+	dao.CreateCrawlEvent(sd, "START_CRAWL", struct{}{})
 	start := time.Now()
 	dao.SetSiteDefLastChecked(sd, start)
 
@@ -125,9 +126,9 @@ func Crawl(sd *models.SiteDef) {
 	var pageUrl string
 	var err error
 
-	pageUrl, _ = dao.GetStartURLForCrawl(sd)
+	pageUrl, err = dao.GetStartURLForCrawl(sd)
 	// on the first crawl, persist SiteUpdate found on that page
-	if pageUrl == "" {
+	if err != nil {
 		log.Info("initial crawl")
 		pageUrl = sd.StartURL
 	}
@@ -136,12 +137,16 @@ func Crawl(sd *models.SiteDef) {
 		page, err = FetchPage(pageUrl)
 		if err != nil {
 			log.Error("error fetching page:", err)
+			evt := struct{URL, Error string}{URL: pageUrl, Error: err.Error()}
+			dao.CreateCrawlEvent(sd, "ERR_FETCH", evt)
 			break
 		}
 
 		newUpdate, err := NewSiteUpdateFromPage(sd, pageUrl, page)
 		if err != nil {
 			log.Error("error creating new SiteUpdate from pageUrl:", err)
+			evt := struct{URL, Error string}{URL: pageUrl, Error: err.Error()}
+			dao.CreateCrawlEvent(sd, "ERR_CREATENEW", evt)
 			break
 		}
 
@@ -150,8 +155,12 @@ func Crawl(sd *models.SiteDef) {
 			err = dao.CreateSiteUpdate(newUpdate)
 			if err != nil {
 				log.Error("error persisting new SiteUpdate:", err)
+				evt := struct{URL, Error string}{URL: pageUrl, Error: err.Error()}
+				dao.CreateCrawlEvent(sd, "ERR_PERSISTNEW", evt)
 				break
 			}
+			evt := struct{Ref string}{Ref: newUpdate.Ref}
+			dao.CreateCrawlEvent(sd, "PERSISTREF", evt)
 		} else {
 			log.Info("already seen:", newUpdate.Ref)
 		}
@@ -164,6 +173,7 @@ func Crawl(sd *models.SiteDef) {
 		}
 		if pageUrl == nextPageUrl {
 			log.Error("pagination loop detected")
+			dao.CreateCrawlEvent(sd, "LOOP", fmt.Sprintf("url=%", pageUrl))
 			break
 		}
 		pageUrl = nextPageUrl
@@ -171,6 +181,7 @@ func Crawl(sd *models.SiteDef) {
 
 	elapsed := time.Now().Sub(start)
 	log.Info("end crawl:", sd.Name, elapsed)
+	dao.CreateCrawlEvent(sd, "END_CRAWL", struct{Duration time.Duration}{Duration: elapsed})
 	return
 }
 

@@ -12,6 +12,8 @@ import (
 
 	"strconv"
 	"time"
+	"errors"
+	"encoding/json"
 )
 
 var dao *BackendDAO
@@ -184,6 +186,47 @@ func (d *BackendDAO) GetStartURLForCrawl(sd *SiteDef) (string, error) {
 	}
 
 	return nextUrl, nil
+}
+
+func (d *BackendDAO) GetCrawlEvents(sd *SiteDef, limit int) (*[]CrawlEvent, error) {
+	events := make([]CrawlEvent, 0)
+	stmt := `SELECT * FROM crawl_events ORDER BY created DESC LIMIT $1;`
+	err := d.DB.Select(&events, stmt, limit)
+	if err != nil {
+		return nil, err
+	}
+	return &events, nil
+}
+
+func (d *BackendDAO) GetCrawlEventsBySiteDef(sd *SiteDef, limit int) (*[]CrawlEvent, error) {
+	events := make([]CrawlEvent, 0)
+	stmt := `SELECT * FROM crawl_events WHERE site_def_id = $1 ORDER BY created DESC LIMIT $2;`
+	err := d.DB.Select(&events, stmt, sd.ID, limit)
+	if err != nil {
+		return nil, err
+	}
+	return &events, nil
+}
+
+func (d *BackendDAO) CreateCrawlEvent(sd *SiteDef, eventType, eventInfo interface{}) error {
+	info, err := json.Marshal(eventInfo)
+	if err != nil {
+		return errors.New("eventInfo should be in format k1=v1&k2=v2")
+	}
+	stmt := `INSERT INTO crawl_events (site_def_id, event_type, event_info) VALUES ($1, $2, $3);`
+	tx, err := d.DB.Beginx()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(stmt, sd.ID, eventType, info)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetDAO() *BackendDAO {

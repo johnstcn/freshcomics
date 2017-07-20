@@ -2,6 +2,7 @@ package models
 
 import (
 	"time"
+	"github.com/jmoiron/sqlx/types"
 )
 
 var schema = `
@@ -35,6 +36,17 @@ CREATE TABLE IF NOT EXISTS site_updates (
 
 CREATE INDEX IF NOT EXISTS site_updates_ref_idx ON site_updates (ref);
 CREATE INDEX IF NOT EXISTS site_updates_published_idx ON site_updates(published);
+
+CREATE TABLE IF NOT EXISTS crawl_events (
+	id				serial		PRIMARY KEY,
+	site_def_id		integer		REFERENCES site_defs (id) ON DELETE CASCADE,
+	created			timestamp	NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	event_type		text		NOT NULL,
+	event_info		JSONB		NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS crawl_events_created_idx ON crawl_events(created);
+CREATE INDEX IF NOT EXISTS crawl_events_event_type_idx ON crawl_events(event_type);
 `
 
 type SiteDef struct {
@@ -61,4 +73,12 @@ type SiteUpdate struct {
 	URL       string
 	Title     string
 	Published time.Time
+}
+
+type CrawlEvent struct {
+	ID		  int64
+	SiteDefID int64
+	Created	  time.Time
+	EventType string
+	EventInfo types.JSONText
 }
