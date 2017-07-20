@@ -9,6 +9,7 @@ import (
 	"github.com/johnstcn/freshcomics/crawler/models"
 	"github.com/johnstcn/freshcomics/crawler/util"
 	"github.com/johnstcn/freshcomics/crawler/web"
+	"github.com/johnstcn/freshcomics/common/log"
 )
 
 

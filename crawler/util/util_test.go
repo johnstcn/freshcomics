@@ -93,7 +93,7 @@ func TestGetNextPageURLNoMatch(t *testing.T) {
 func TestDecodeHTMLString(t *testing.T) {
 	mojibake := `<html><body>文字化け</body></html>`
 	r1 := strings.NewReader(mojibake)
-	r2, err := DecodeHTMLString(r1)
+	r2, err := decodeHTMLString(r1)
 	res, _ := ioutil.ReadAll(r2)
 	assert.Nil(t, err)
 	assert.Equal(t, mojibake, string(res))

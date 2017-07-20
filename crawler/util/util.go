@@ -15,6 +15,7 @@ import (
 	"gopkg.in/xmlpath.v2"
 
 	"github.com/johnstcn/freshcomics/common/log"
+	"github.com/johnstcn/freshcomics/crawler/config"
 	"github.com/johnstcn/freshcomics/crawler/models"
 )
 
@@ -76,7 +77,7 @@ func GetNextPageURL(sd *models.SiteDef, page *xmlpath.Node) (string, error) {
 	return nextPageUrl, nil
 }
 
-func DecodeHTMLString(r io.Reader) (io.Reader, error) {
+func decodeHTMLString(r io.Reader) (io.Reader, error) {
 	utfRdr, err := charset.NewReader(r, "text/html")
 	if err != nil {
 		return nil, err
@@ -84,16 +85,9 @@ func DecodeHTMLString(r io.Reader) (io.Reader, error) {
 	return utfRdr, nil
 }
 
-// FetchPage fetches and parses the given URL and returns the DOM.
-func FetchPage(url string) (*xmlpath.Node, error) {
-	log.Info("GET", url)
-	resp, err := http.Get(url)
-	if resp == nil || err != nil {
-		return nil, errors.Wrapf(err, "get %s failed", url)
-	}
-	defer resp.Body.Close()
-
-	rdr, err := DecodeHTMLString(resp.Body)
+func parse(rc io.ReadCloser) (*xmlpath.Node, error) {
+	defer rc.Close()
+	rdr, err := decodeHTMLString(rc)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to convert response to utf8")
 	}
@@ -112,6 +106,35 @@ func FetchPage(url string) (*xmlpath.Node, error) {
 		return nil, errors.Wrap(err, "xmlpath failed to parse html")
 	}
 	return xmlRoot, nil
+}
+
+func fetch(url string) (io.ReadCloser, error) {
+	var err error
+	for attempt, waitSecs := range config.Cfg.Backoff {
+		log.Info(fmt.Sprintf("GET [%d/%d] %s", attempt + 1, len(config.Cfg.Backoff), url))
+		resp, err := http.Get(url)
+		if resp == nil || err != nil {
+			log.Info(fmt.Sprintf("GET %s failed: %s", url, err))
+			log.Info(fmt.Sprintf("waiting %d seconds to retry", waitSecs))
+			time.Sleep(time.Duration(waitSecs) * time.Second)
+		} else {
+			return resp.Body, nil
+		}
+	}
+	return nil, err
+}
+
+// FetchAndParse fetches and parses the given URL and returns the DOM.
+func FetchAndParse(url string) (*xmlpath.Node, error) {
+	body, err := fetch(url)
+	if err != nil {
+		return nil, err
+	}
+	root, err := parse(body)
+	if err != nil {
+		return nil, err
+	}
+	return root, nil
 }
 
 // Crawl runs an incremental crawl of sd.
@@ -134,7 +157,7 @@ func Crawl(sd *models.SiteDef) {
 	}
 
 	for {
-		page, err = FetchPage(pageUrl)
+		page, err = FetchAndParse(pageUrl)
 		if err != nil {
 			log.Error("error fetching page:", err)
 			evt := struct{URL, Error string}{URL: pageUrl, Error: err.Error()}
@@ -194,7 +217,7 @@ type TestCrawlResult struct {
 // TestCrawl runs a test of a single URL without persisting anything
 func TestCrawl(sd *models.SiteDef) *TestCrawlResult {
 	res := &TestCrawlResult{}
-	page, err := FetchPage(sd.StartURL)
+	page, err := FetchAndParse(sd.StartURL)
 	if err != nil {
 		res.Error = err.Error()
 		return res
