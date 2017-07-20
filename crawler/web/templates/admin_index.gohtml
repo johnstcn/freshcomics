@@ -20,7 +20,7 @@
         <div class="row">
             <div class="list-group">
                 {{ range . }}
-                <a class="list-group-item" href="/sitedef?id={{ .ID }}">{{ .Name }}</a>
+                <a class="list-group-item" href="/sitedef/{{ .ID }}">{{ .Name }}</a>
                 {{ end }}
             </ul>
         </div>

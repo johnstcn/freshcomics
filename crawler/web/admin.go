@@ -11,15 +11,11 @@ import (
 	"github.com/johnstcn/freshcomics/common/log"
 	"github.com/johnstcn/freshcomics/crawler/models"
 	"github.com/johnstcn/freshcomics/crawler/util"
+	"github.com/gorilla/mux"
 )
 
 var tpl *template.Template
-
-func getTemplate(assetName string) *template.Template {
-	tmplBytes := MustAsset(assetName)
-	tmpl := template.Must(template.New(assetName).Parse(string(tmplBytes)))
-	return tmpl
-}
+var rtr *mux.Router
 
 // Shows a list of SiteDefs
 func siteDefsHandler(resp http.ResponseWriter, req *http.Request) {
@@ -64,7 +60,8 @@ func newSiteDefHandler(resp http.ResponseWriter, req *http.Request) {
 
 func detailsHandler(resp http.ResponseWriter, req *http.Request) {
 	dao := models.GetDAO()
-	id, err := strconv.Atoi(req.URL.Query().Get("id"))
+	vars := mux.Vars(req)
+	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
 		log.Error(err)
 		http.Redirect(resp, req, "/", 500)
@@ -133,12 +130,16 @@ func testHandler(resp http.ResponseWriter, req *http.Request) {
 
 func ServeAdmin(host, port string) {
 	listenAddress := fmt.Sprintf("%s:%s", host, port)
-	http.HandleFunc("/", siteDefsHandler)
-	http.HandleFunc("/sitedef", detailsHandler)
-	http.HandleFunc("/sitedef/new", newSiteDefHandler)
-	http.HandleFunc("/sitedef/test", testHandler)
 	log.Info("Listening on", listenAddress)
-	log.Error(http.ListenAndServe(listenAddress, http.DefaultServeMux))
+	log.Error(http.ListenAndServe(listenAddress, rtr))
+}
+
+func initRoutes() {
+	rtr = mux.NewRouter()
+	rtr.HandleFunc("/", siteDefsHandler)
+	rtr.HandleFunc("/sitedef/{id:[0-9]+}", detailsHandler)
+	rtr.HandleFunc("/sitedef/new", newSiteDefHandler)
+	rtr.HandleFunc("/sitedef/test", testHandler)
 }
 
 func initTemplates() {
@@ -154,5 +155,6 @@ func initTemplates() {
 }
 
 func init() {
+	initRoutes()
 	initTemplates()
 }
