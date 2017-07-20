@@ -159,7 +159,7 @@ func forceCrawlHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func eventsHandler(resp http.ResponseWriter, req *http.Request) {
+func siteDefEventsHandler(resp http.ResponseWriter, req *http.Request) {
 	dao := models.GetDAO()
 	vars := mux.Vars(req)
 	defId, _ := strconv.Atoi(vars["id"])
@@ -172,7 +172,7 @@ func eventsHandler(resp http.ResponseWriter, req *http.Request) {
 	enc.Encode(events)
 }
 
-func updatesHandler(resp http.ResponseWriter, req *http.Request) {
+func siteDefUpdatesHandler(resp http.ResponseWriter, req *http.Request) {
 	dao := models.GetDAO()
 	vars := mux.Vars(req)
 	defId, _ := strconv.Atoi(vars["id"])
@@ -185,6 +185,18 @@ func updatesHandler(resp http.ResponseWriter, req *http.Request) {
 	enc.Encode(updates)
 }
 
+func eventsHandler(resp http.ResponseWriter, req *http.Request) {
+	dao := models.GetDAO()
+	limit, err := strconv.Atoi(req.FormValue("limit"))
+	if err != nil {
+		limit = 100
+	}
+	events, _ := dao.GetCrawlEvents(limit)
+	enc := json.NewEncoder(resp)
+	enc.SetIndent("", "\t")
+	enc.Encode(events)
+}
+
 func ServeAdmin(host string, port int) {
 	listenAddress := fmt.Sprintf("%s:%d", host, port)
 	log.Info("Listening on", listenAddress)
@@ -195,11 +207,12 @@ func initRoutes() {
 	rtr = mux.NewRouter()
 	rtr.HandleFunc("/", siteDefsHandler)
 	rtr.HandleFunc("/sitedef/{id:[0-9]+}", detailsHandler)
-	rtr.HandleFunc("/sitedef/{id:[0-9]+}/events", eventsHandler)
-	rtr.HandleFunc("/sitedef/{id:[0-9]+}/updates", updatesHandler)
+	rtr.HandleFunc("/sitedef/{id:[0-9]+}/events", siteDefEventsHandler)
+	rtr.HandleFunc("/sitedef/{id:[0-9]+}/updates", siteDefUpdatesHandler)
 	rtr.HandleFunc("/sitedef/new", newSiteDefHandler)
 	rtr.HandleFunc("/sitedef/test", testHandler)
 	rtr.HandleFunc("/sitedef/crawl", forceCrawlHandler)
+	rtr.HandleFunc("/events", eventsHandler)
 }
 
 func initTemplates() {
