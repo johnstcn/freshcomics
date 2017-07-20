@@ -9,10 +9,12 @@ import (
 	"github.com/johnstcn/freshcomics/frontend/models"
 	"github.com/dustin/go-humanize"
 	"time"
+	"github.com/gorilla/mux"
 )
 
 var tpl *template.Template
 var comics *[]models.Comic
+var rtr *mux.Router
 
 func updateComics() {
 	for {
@@ -43,8 +45,7 @@ func indexHandler(resp http.ResponseWriter, req *http.Request) {
 func ServeFrontend(host, port string) {
 	listenAddress := fmt.Sprintf("%s:%s", host, port)
 	log.Info("Listening on", listenAddress)
-	http.HandleFunc("/", indexHandler)
-	http.ListenAndServe(listenAddress, http.DefaultServeMux)
+	http.ListenAndServe(listenAddress, rtr)
 }
 
 func initTemplates() {
@@ -58,7 +59,13 @@ func initTemplates() {
 	}
 }
 
+func initRoutes() {
+	rtr = mux.NewRouter()
+	rtr.HandleFunc("/", indexHandler)
+}
+
 func init() {
-	initTemplates()
 	go updateComics()
+	initTemplates()
+	initRoutes()
 }
