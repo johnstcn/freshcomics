@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-
-	"github.com/johnstcn/freshcomics/common/log"
-	"github.com/johnstcn/freshcomics/frontend/models"
-	"github.com/dustin/go-humanize"
+	"strings"
 	"time"
+
+	"github.com/dustin/go-humanize"
 	"github.com/gorilla/mux"
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/html"
 	"github.com/tdewolff/minify/css"
-	"strings"
+
+	"github.com/johnstcn/freshcomics/common/log"
+	"github.com/johnstcn/freshcomics/frontend/models"
 )
 
 var tpl *template.Template
