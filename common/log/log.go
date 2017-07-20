@@ -14,9 +14,9 @@ var (
 )
 
 func setupLogger(debugHandle, infoHandle, errorHandle io.Writer) {
-	debug = log.New(debugHandle, "[DEBUG] ", log.Ldate|log.Ltime|log.Lshortfile)
-	info = log.New(infoHandle, "[INFO] ", log.Ldate|log.Ltime|log.Lshortfile)
-	error = log.New(errorHandle, "[ERROR] ", log.Ldate|log.Ltime|log.Lshortfile)
+	debug = log.New(debugHandle, "[DEBUG] ", log.Ldate|log.Ltime)
+	info = log.New(infoHandle, "[INFO] ", log.Ldate|log.Ltime)
+	error = log.New(errorHandle, "[ERROR] ", log.Ldate|log.Ltime)
 }
 
 func Debug(v ...interface{}) {
