@@ -42,6 +42,18 @@ func indexHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func redirectHandler(resp http.ResponseWriter, req *http.Request) {
+	dao := models.GetDAO()
+	vars := mux.Vars(req)
+	updateId := vars["id"]
+	url, err := dao.GetRedirectURL(updateId)
+	if err != nil {
+		http.NotFound(resp, req)
+		return
+	}
+	http.Redirect(resp, req, url, 301)
+}
+
 func ServeFrontend(host, port string) {
 	listenAddress := fmt.Sprintf("%s:%s", host, port)
 	log.Info("Listening on", listenAddress)
@@ -62,6 +74,7 @@ func initTemplates() {
 func initRoutes() {
 	rtr = mux.NewRouter()
 	rtr.HandleFunc("/", indexHandler)
+	rtr.HandleFunc("/view/{id:[0-9]+}", redirectHandler)
 }
 
 func init() {

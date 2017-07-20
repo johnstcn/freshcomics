@@ -31,7 +31,7 @@ func GetDAO() *FrontendDAO {
 func (d *FrontendDAO) GetComics() (*[]Comic, error) {
 	comics := make([]Comic, 0)
 	// TODO optimize this beast
-	stmt := `SELECT site_defs.name, site_defs.nsfw, site_updates.title, site_updates.url, site_updates.published
+	stmt := `SELECT site_defs.name, site_defs.nsfw, site_updates.id, site_updates.title, site_updates.published
 FROM site_updates JOIN site_defs ON (site_updates.site_def_id = site_defs.id)
 WHERE site_updates.id IN (
   SELECT DISTINCT ON (site_def_id) id
@@ -44,4 +44,14 @@ WHERE site_updates.id IN (
 		return nil, err
 	}
 	return &comics, nil
+}
+
+func (d *FrontendDAO) GetRedirectURL(updateID string) (string, error) {
+	var result string
+	stmt := `SELECT site_updates.url FROM site_updates WHERE id = $1`
+	err := d.DB.Get(&result, stmt, updateID)
+	if err != nil {
+		return "", err
+	}
+	return result, nil
 }
