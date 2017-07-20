@@ -15,7 +15,7 @@
             <div class="panel panel-primary">
                 <div class="panel-heading">Definition</div>
                 <div class="panel-body">
-                    <form method="POST" id="sitedef_form" action="/sitedef?id={{ .SiteDef.ID }}">
+                    <form method="POST" id="sitedef_form" action="/sitedef/{{ .SiteDef.ID }}">
                         <div class="form-group">
                             <label class="control-label" for="sitedef_name">Name:</label>
                             <input class="form-control" type="text" id="sitedef_name" name="name" value="{{ .SiteDef.Name }}">

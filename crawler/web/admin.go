@@ -50,7 +50,7 @@ func newSiteDefHandler(resp http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Error(err)
 		}
-		rdir := fmt.Sprintf("/sitedef?id=%d", def.ID)
+		rdir := fmt.Sprintf("/sitedef/%d", def.ID)
 		log.Info("Redirecting to", rdir)
 		http.Redirect(resp, req, rdir, 302)
 	} else {
