@@ -9,7 +9,6 @@ import (
 )
 
 type Config struct {
-	Debug 				bool	`default:"false"`
 	Host 				string 	`default:"localhost"`
 	Port 				int 	`default:"3000"`
 	CheckIntervalSecs 	int 	`default:"600"`
@@ -26,7 +25,6 @@ func init() {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
-	log.Info("[config] Debug:", Cfg.Debug)
 	log.Info("[config] Host:", Cfg.Host)
 	log.Info("[config] Port:", Cfg.Port)
 	log.Info("[config] CheckIntervalSecs:", Cfg.CheckIntervalSecs)
