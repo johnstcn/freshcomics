@@ -228,14 +228,15 @@ func (d *BackendDAO) CreateCrawlEvent(sd *SiteDef, eventType, eventInfo interfac
 	return nil
 }
 
+func init() {
+	dsn := config.Cfg.DSN
+	db := sqlx.MustConnect("postgres", dsn)
+	log.Info("Connected to database")
+	db.MustExec(schema)
+	db.MapperFunc(snakecase.SnakeCase)
+	dao = &BackendDAO{DB: db}
+}
+
 func GetDAO() *BackendDAO {
-	if dao == nil {
-		dsn := config.Cfg.DSN
-		db := sqlx.MustConnect("postgres", dsn)
-		log.Info("Connected to database")
-		db.MustExec(schema)
-		db.MapperFunc(snakecase.SnakeCase)
-		dao = &BackendDAO{DB: db}
-	}
 	return dao
 }

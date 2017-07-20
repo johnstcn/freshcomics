@@ -17,14 +17,15 @@ type FrontendDAO struct {
 	DB *sqlx.DB
 }
 
+func init() {
+	dsn := os.Getenv("DSN")
+	db := sqlx.MustConnect("postgres", dsn)
+	log.Info("Connected to database")
+	db.MapperFunc(snakecase.SnakeCase)
+	dao = &FrontendDAO{DB: db}
+}
+
 func GetDAO() *FrontendDAO {
-	if dao == nil {
-		dsn := os.Getenv("DSN")
-		db := sqlx.MustConnect("postgres", dsn)
-		log.Info("Connected to database")
-		db.MapperFunc(snakecase.SnakeCase)
-		dao = &FrontendDAO{DB: db}
-	}
 	return dao
 }
 
