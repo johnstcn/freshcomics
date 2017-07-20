@@ -14,7 +14,11 @@ var (
 )
 
 func setupLogger(debugHandle, infoHandle, errorHandle io.Writer) {
-	debug = log.New(debugHandle, "[DEBUG] ", log.Ldate|log.Ltime)
+	if os.Getenv("DEBUG") != "" {
+		debug = log.New(debugHandle, "[DEBUG] ", log.Ldate|log.Ltime)
+	} else {
+		debug = log.New(ioutil.Discard, "", log.LstdFlags)
+	}
 	info = log.New(infoHandle, "[INFO] ", log.Ldate|log.Ltime)
 	error = log.New(errorHandle, "[ERROR] ", log.Ldate|log.Ltime)
 }
