@@ -17,18 +17,6 @@ type FrontendDAO struct {
 	DB *sqlx.DB
 }
 
-func init() {
-	dsn := os.Getenv("DSN")
-	db := sqlx.MustConnect("postgres", dsn)
-	log.Info("Connected to database")
-	db.MapperFunc(snakecase.SnakeCase)
-	dao = &FrontendDAO{DB: db}
-}
-
-func GetDAO() *FrontendDAO {
-	return dao
-}
-
 func (d *FrontendDAO) GetComics() (*[]Comic, error) {
 	comics := make([]Comic, 0)
 	// TODO optimize this beast
@@ -55,4 +43,16 @@ func (d *FrontendDAO) GetRedirectURL(updateID string) (string, error) {
 		return "", err
 	}
 	return result, nil
+}
+
+func init() {
+	dsn := os.Getenv("DSN")
+	db := sqlx.MustConnect("postgres", dsn)
+	log.Info("Connected to database")
+	db.MapperFunc(snakecase.SnakeCase)
+	dao = &FrontendDAO{DB: db}
+}
+
+func GetDAO() *FrontendDAO {
+	return dao
 }
