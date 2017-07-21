@@ -6,3 +6,5 @@ type Config struct {
 	Port 				int 	`default:"3000"`
 	DSN                 string  `default:"host=localhost user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable"`
 }
+
+var Cfg Config
