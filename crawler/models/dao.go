@@ -100,7 +100,7 @@ func (d *BackendDAO) SaveSiteDef(sd *SiteDef) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(stmt, sd.Name, sd.Active, sd.NSFW, sd.StartURL, sd.LastChecked,
+	_, err = tx.Exec(stmt, sd.Name, sd.Active, sd.NSFW, sd.StartURL, sd.LastCheckedAt,
 		sd.URLTemplate, sd.RefXpath, sd.RefRegexp, sd.TitleXpath, sd.TitleRegexp,
 		sd.DateXpath, sd.DateRegexp, sd.DateFormat, sd.ID)
 	if err != nil {

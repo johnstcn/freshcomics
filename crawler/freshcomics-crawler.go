@@ -24,9 +24,9 @@ func main() {
 		now := time.Now().UTC()
 		def, _ := dao.GetSiteDefLastChecked()
 		if def != nil {
-			delta := now.Sub(def.LastChecked)
+			delta := now.Sub(def.LastCheckedAt)
 			shouldCheck := delta > checkInterval
-			log.Debug("def", def.Name, "last checked", def.LastChecked)
+			log.Debug("def", def.Name, "last checked", def.LastCheckedAt)
 			log.Debug("now", now)
 			log.Debug("checkInterval:", checkInterval)
 			log.Debug("delta:", delta)

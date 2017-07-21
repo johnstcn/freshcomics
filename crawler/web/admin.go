@@ -102,7 +102,7 @@ func detailsHandler(resp http.ResponseWriter, req *http.Request) {
 		def.DateXpath = req.PostFormValue("datexpath")
 		def.DateRegexp = req.PostFormValue("dateregexp")
 		def.DateFormat = req.PostFormValue("dateformat")
-		def.LastChecked, _ = time.Parse("2006-01-02T15:04:05", req.PostFormValue("lastchecked"))
+		def.LastCheckedAt, _ = time.Parse("2006-01-02T15:04:05", req.PostFormValue("lastchecked"))
 		err := dao.SaveSiteDef(def)
 		if err != nil {
 			r.Success = false
@@ -119,20 +119,20 @@ func detailsHandler(resp http.ResponseWriter, req *http.Request) {
 
 func testHandler(resp http.ResponseWriter, req *http.Request) {
 	sd := models.SiteDef{
-		ID:          0,
-		Name:        req.PostFormValue("name"),
-		Active:      false,
-		NSFW:        false,
-		StartURL:    req.PostFormValue("starturl"),
-		LastChecked: time.Time{},
-		URLTemplate: req.PostFormValue("urltemplate"),
-		RefXpath:    req.PostFormValue("refxpath"),
-		RefRegexp:   req.PostFormValue("refregexp"),
-		TitleXpath:  req.PostFormValue("titlexpath"),
-		TitleRegexp: req.PostFormValue("titleregexp"),
-		DateXpath:   req.PostFormValue("datexpath"),
-		DateRegexp:  req.PostFormValue("dateregexp"),
-		DateFormat:  req.PostFormValue("dateformat"),
+		ID:            0,
+		Name:          req.PostFormValue("name"),
+		Active:        false,
+		NSFW:          false,
+		StartURL:      req.PostFormValue("starturl"),
+		LastCheckedAt: time.Time{},
+		URLTemplate:   req.PostFormValue("urltemplate"),
+		RefXpath:      req.PostFormValue("refxpath"),
+		RefRegexp:     req.PostFormValue("refregexp"),
+		TitleXpath:    req.PostFormValue("titlexpath"),
+		TitleRegexp:   req.PostFormValue("titleregexp"),
+		DateXpath:     req.PostFormValue("datexpath"),
+		DateRegexp:    req.PostFormValue("dateregexp"),
+		DateFormat:    req.PostFormValue("dateformat"),
 	}
 	res := util.TestCrawl(&sd)
 	enc := json.NewEncoder(resp)
