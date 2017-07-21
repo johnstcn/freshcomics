@@ -4,7 +4,7 @@
         <ul id="comic_list">
         {{ range .Comics }}
             <li>
-                <time>{{ .Published | humanDuration }}</time>
+                <time>seen {{ .SeenAt | humanDuration }}</time>
                 <a target="_blank" href="/view/{{ .ID }}">
                     <h3>{{ .Name }}
                     {{ if .NSFW }}<sup class="nsfw">NSFW</sup>{{ end }}</h3>

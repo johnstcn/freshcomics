@@ -20,13 +20,13 @@ type FrontendDAO struct {
 func (d *FrontendDAO) GetComics() (*[]Comic, error) {
 	comics := make([]Comic, 0)
 	// TODO optimize this beast
-	stmt := `SELECT site_defs.name, site_defs.nsfw, site_updates.id, site_updates.title, site_updates.published
+	stmt := `SELECT site_defs.name, site_defs.nsfw, site_updates.id, site_updates.title, site_updates.seen_at
 FROM site_updates JOIN site_defs ON (site_updates.site_def_id = site_defs.id)
 WHERE site_updates.id IN (
   SELECT DISTINCT ON (site_def_id) id
   FROM site_updates
-  ORDER BY site_def_id, published DESC
-) ORDER BY published desc;`
+  ORDER BY site_def_id, seen_at DESC
+) ORDER BY seen_at desc;`
 	err := d.DB.Select(&comics, stmt)
 	if err != nil {
 		fmt.Println("error fetching latest comic list:", err)

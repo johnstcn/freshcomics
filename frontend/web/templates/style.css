@@ -37,6 +37,7 @@ a {
 }
 #comic_list time {
     float: right;
+    font-size: 0.75em;
 }
 
 #comic_list .nsfw {
