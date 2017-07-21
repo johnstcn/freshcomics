@@ -65,11 +65,11 @@ func cssHandler(resp http.ResponseWriter, req *http.Request) {
 	m := minify.New()
 	m.AddFunc("text/css", css.Minify)
 	log.Debug(req.RequestURI)
-	css, err := Asset(strings.TrimLeft(req.RequestURI, "/"))
+	cssAsset, err := Asset(strings.TrimLeft(req.RequestURI, "/"))
 	if err != nil {
 		log.Error(err)
 	}
-	minified, err := m.Bytes("text/css", css)
+	minified, err := m.Bytes("text/css", cssAsset)
 	if err != nil {
 		log.Error("unable to minify css:", err)
 	}
