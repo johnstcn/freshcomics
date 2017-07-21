@@ -86,7 +86,7 @@ func (d *BackendDAO) SaveSiteDef(sd *SiteDef) error {
 		active,
 		nsfw,
 		start_url,
-		last_checked,
+		last_checked_at,
 		url_template,
 		ref_xpath,
 		ref_regexp,
