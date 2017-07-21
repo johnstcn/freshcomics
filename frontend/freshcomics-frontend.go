@@ -4,13 +4,12 @@ package main
 
 
 import (
-	"os"
-
-	"github.com/johnstcn/freshcomics/frontend/web"
 	"github.com/johnstcn/freshcomics/common/log"
+	"github.com/johnstcn/freshcomics/frontend/web"
+	"github.com/johnstcn/freshcomics/frontend/config"
 )
 
 func main() {
 	log.Info("Starting up")
-	web.ServeFrontend(os.Getenv("HOST"), os.Getenv("PORT"))
+	web.ServeFrontend(config.Cfg.Host, config.Cfg.Port)
 }

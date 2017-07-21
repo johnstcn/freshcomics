@@ -8,7 +8,7 @@ import (
 	"github.com/azer/snakecase"
 
 	"github.com/johnstcn/freshcomics/common/log"
-	"fmt"
+	"github.com/johnstcn/freshcomics/frontend/config"
 )
 
 var dao *FrontendDAO
@@ -46,7 +46,7 @@ func (d *FrontendDAO) GetRedirectURL(updateID string) (string, error) {
 }
 
 func init() {
-	dsn := os.Getenv("DSN")
+	dsn := config.Cfg.DSN
 	db := sqlx.MustConnect("postgres", dsn)
 	log.Info("Connected to database")
 	db.MapperFunc(snakecase.SnakeCase)

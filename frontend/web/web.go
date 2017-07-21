@@ -14,6 +14,7 @@ import (
 	"github.com/tdewolff/minify/css"
 
 	"github.com/johnstcn/freshcomics/common/log"
+	"github.com/johnstcn/freshcomics/frontend/config"
 	"github.com/johnstcn/freshcomics/frontend/models"
 )
 
@@ -22,6 +23,7 @@ var comics *[]models.Comic
 var rtr *mux.Router
 
 func updateComics() {
+	interval := time.Duration(config.Cfg.RefreshIntervalSecs) * time.Second
 	for {
 		log.Info("updating comic list")
 		dao := models.GetDAO()
@@ -31,7 +33,7 @@ func updateComics() {
 		} else {
 			comics = newComics
 		}
-		time.Sleep(10 * time.Second)
+		time.Sleep(interval)
 	}
 }
 
@@ -75,8 +77,8 @@ func cssHandler(resp http.ResponseWriter, req *http.Request) {
 	resp.Write(minified)
 }
 
-func ServeFrontend(host, port string) {
-	listenAddress := fmt.Sprintf("%s:%s", host, port)
+func ServeFrontend(host string, port int) {
+	listenAddress := fmt.Sprintf("%s:%d", host, port)
 	log.Info("Listening on", listenAddress)
 	http.ListenAndServe(listenAddress, rtr)
 }
