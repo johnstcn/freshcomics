@@ -4,13 +4,8 @@
         <ul id="comic_list">
         {{ range .Comics }}
             <li>
+                <a target="_blank" href="/view/{{ .ID }}">{{ .Name }}: <em>{{ .Title }}</em>{{ if .NSFW }}<sup class="nsfw">NSFW</sup>{{ end }}</a>
                 <time>seen {{ .SeenAt | humanDuration }}</time>
-                <a target="_blank" href="/view/{{ .ID }}">
-                    <h3>{{ .Name }}
-                    {{ if .NSFW }}<sup class="nsfw">NSFW</sup>{{ end }}</h3>
-                    <em>{{ .Title }}</em>
-                </a>
-                <div style="clear: both;"></div>
         {{ end }}
         </ul>
     </article>
