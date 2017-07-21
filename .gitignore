@@ -1,5 +1,8 @@
 .idea/
 .vagrant
 crawler/gin-bin
+crawler/freshcomics-crawler
 frontend/gin-bin
+frontend/freshcomics-frontend
 deploy/staging/vault_password
+
