@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS site_defs (
 	active			boolean		NOT NULL DEFAULT FALSE,
 	nsfw			boolean		NOT NULL DEFAULT FALSE,
 	start_url 		text 		NOT NULL DEFAULT 'http://example.com' UNIQUE,
-	last_checked 	timestamp	NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	last_checked 	timestamptz	NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	url_template 	text 		NOT NULL DEFAULT 'http://example.com/%s' UNIQUE,
 	ref_xpath 		text 		NOT NULL DEFAULT '//a[@rel="next"]/@href',
 	ref_regexp 		text 		NOT NULL DEFAULT '([^/]+)/?$',
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS site_updates (
 	ref 			text		NOT NULL,
 	url				text		NOT NULL UNIQUE,
 	title			text		NOT NULL,
-	published		timestamp	NOT NULL DEFAULT CURRENT_TIMESTAMP
+	published		timestamptz	NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS site_updates_ref_idx ON site_updates (ref);
@@ -40,7 +40,7 @@ CREATE INDEX IF NOT EXISTS site_updates_published_idx ON site_updates(published)
 CREATE TABLE IF NOT EXISTS crawl_events (
 	id				serial		PRIMARY KEY,
 	site_def_id		integer		REFERENCES site_defs (id) ON DELETE CASCADE,
-	created			timestamp	NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	created			timestamptz	NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	event_type		text		NOT NULL,
 	event_info		JSONB		NOT NULL
 );
