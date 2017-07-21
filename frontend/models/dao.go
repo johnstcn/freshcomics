@@ -1,11 +1,15 @@
 package models
 
 import (
-	"os"
+	"fmt"
+	"net"
+	"strconv"
+	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/jmoiron/sqlx"
 	"github.com/azer/snakecase"
+	"github.com/fiorix/freegeoip"
 
 	"github.com/johnstcn/freshcomics/common/log"
 	"github.com/johnstcn/freshcomics/frontend/config"
@@ -15,6 +19,7 @@ var dao *FrontendDAO
 
 type FrontendDAO struct {
 	DB *sqlx.DB
+	GeoIP *freegeoip.DB
 }
 
 func (d *FrontendDAO) GetComics() (*[]Comic, error) {
@@ -45,12 +50,58 @@ func (d *FrontendDAO) GetRedirectURL(updateID string) (string, error) {
 	return result, nil
 }
 
+func (d *FrontendDAO) getIPInfo(addr net.IP) (country, region, city string){
+	var ipInfo freegeoip.DefaultQuery
+	d.GeoIP.Lookup(addr, &ipInfo)
+	country = ipInfo.Country.ISOCode
+	if len(ipInfo.Region) > 0 {
+		region = ipInfo.Region[0].ISOCode
+	}
+	if len(ipInfo.City.Names) > 0 {
+		city = ipInfo.City.Names["en"]
+	}
+	log.Debug("GeoIP:", addr.String(), "->", country, region, city)
+	return
+}
+
+func (d *FrontendDAO) RecordClick(updateID string, addr net.IP) error {
+	uid, err := strconv.Atoi(updateID)
+	if err != nil {
+		log.Error("invalid updateID:", err)
+	}
+	stmt := `INSERT INTO comic_clicks (update_id, country, region, city) VALUES ($1, $2, $3, $4);`
+
+	tx, err := d.DB.Beginx()
+	if err != nil {
+		log.Error(err)
+	}
+	country, region, city := d.getIPInfo(addr)
+	_, err = tx.Exec(stmt, uid, country, region, city)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func init() {
 	dsn := config.Cfg.DSN
 	db := sqlx.MustConnect("postgres", dsn)
 	log.Info("Connected to database")
 	db.MapperFunc(snakecase.SnakeCase)
-	dao = &FrontendDAO{DB: db}
+	db.MustExec(schema)
+
+	geoIPRefresh := time.Duration(config.Cfg.GeoIPRefreshSecs) * time.Second
+	geoIPFetchTimeout := time.Duration(config.Cfg.GeoIPFetchTimeoutSecs) * time.Second
+	ip, err := freegeoip.OpenURL(freegeoip.MaxMindDB, geoIPRefresh, geoIPFetchTimeout)
+	if err != nil {
+		log.Error("Could not open MaxMind GeoIP DB:", err)
+	}
+
+	dao = &FrontendDAO{DB: db, GeoIP: ip}
 }
 
 func GetDAO() *FrontendDAO {

@@ -3,8 +3,10 @@ package web
 import (
 	"fmt"
 	"html/template"
+	"net"
 	"net/http"
 	"strings"
+	"regexp"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -16,6 +18,7 @@ import (
 	"github.com/johnstcn/freshcomics/common/log"
 	"github.com/johnstcn/freshcomics/frontend/config"
 	"github.com/johnstcn/freshcomics/frontend/models"
+	"errors"
 )
 
 var tpl *template.Template
@@ -49,10 +52,30 @@ func indexHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func remoteIP(req *http.Request) (net.IP, error) {
+	fwdHdr := req.Header.Get("X-Forwarded-For")
+	log.Debug("X-Forwarded-For header:", fwdHdr)
+	fwdAddr := regexp.MustCompile(`^\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)`).FindString(fwdHdr)
+	addr := net.ParseIP(fwdAddr)
+	if fwdAddr == "" || addr == nil {
+		return nil, errors.New(fmt.Sprintf("unable to parse X-Forwarded-For: %s", fwdHdr))
+	}
+	return addr, nil
+}
+
 func redirectHandler(resp http.ResponseWriter, req *http.Request) {
 	dao := models.GetDAO()
 	vars := mux.Vars(req)
 	updateId := vars["id"]
+	addr, err := remoteIP(req)
+	if err != nil {
+		log.Error(err)
+	} else {
+		err = dao.RecordClick(updateId, addr)
+		if err != nil {
+			log.Error("error recording click:", err)
+		}
+	}
 	url, err := dao.GetRedirectURL(updateId)
 	if err != nil {
 		http.NotFound(resp, req)

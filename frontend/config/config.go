@@ -12,6 +12,8 @@ import (
 type FrontendConfig struct {
 	config.Config
 	RefreshIntervalSecs 	int 	`default:"60"`
+	GeoIPRefreshSecs int `default:"86400"`
+	GeoIPFetchTimeoutSecs int `default:"5"`
 }
 
 var Cfg FrontendConfig
