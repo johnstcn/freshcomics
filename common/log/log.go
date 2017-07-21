@@ -1,10 +1,12 @@
 package log
 
 import (
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"io"
+
+	"github.com/johnstcn/freshcomics/common/config"
 )
 
 var (
@@ -14,11 +16,7 @@ var (
 )
 
 func setupLogger(debugHandle, infoHandle, errorHandle io.Writer) {
-	if os.Getenv("DEBUG") != "" {
-		debug = log.New(debugHandle, "[DEBUG] ", log.Ldate|log.Ltime)
-	} else {
-		debug = log.New(ioutil.Discard, "", log.LstdFlags)
-	}
+	debug = log.New(debugHandle, "[DEBUG] ", log.Ldate|log.Ltime)
 	info = log.New(infoHandle, "[INFO] ", log.Ldate|log.Ltime)
 	error = log.New(errorHandle, "[ERROR] ", log.Ldate|log.Ltime)
 }
@@ -37,13 +35,11 @@ func Error(v ...interface{}) {
 
 func init() {
 	debugHandle := ioutil.Discard
-	infoHandle := os.Stdout
-	errorHandle := os.Stderr
-
-	verbose := os.Getenv("VERBOSE") == "1"
-	if verbose {
+	if config.Cfg.Debug {
 		debugHandle = os.Stdout
 	}
+	infoHandle := os.Stdout
+	errorHandle := os.Stderr
 
 	setupLogger(debugHandle, infoHandle, errorHandle)
 }
