@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"os"
 
 	"github.com/kelseyhightower/envconfig"
 
@@ -22,6 +23,7 @@ func init() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	log.Println("[config] Debug:", os.Getenv("DEBUG") != "")
 	log.Println("[config] Host:", Cfg.Host)
 	log.Println("[config] Port:", Cfg.Port)
 	log.Println("[config] CheckIntervalSecs:", Cfg.CheckIntervalSecs)

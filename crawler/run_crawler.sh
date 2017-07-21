@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-export FRESHCOMICS_CRAWLER_DEBUG=true
+export DEBUG=true
 export FRESHCOMICS_CRAWLER_HOST=localhost
 export FRESHCOMICS_CRAWLER_PORT=3001
 export FRESHCOMICS_CRAWLER_DSN='host=localhost user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable'

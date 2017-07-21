@@ -9,6 +9,7 @@ import (
 	"github.com/johnstcn/freshcomics/crawler/models"
 	"github.com/johnstcn/freshcomics/crawler/util"
 	"github.com/johnstcn/freshcomics/crawler/web"
+	"github.com/johnstcn/freshcomics/common/log"
 )
 
 
@@ -25,8 +26,11 @@ func main() {
 			shouldCheck := time.Now().Sub(def.LastChecked) > checkInterval
 			if shouldCheck {
 				go util.Crawl(def)
+			} else {
+				log.Debug("nothing to schedule")
 			}
 		}
 		time.Sleep(tick)
+		log.Debug("sleeping for", tick)
 	}
 }

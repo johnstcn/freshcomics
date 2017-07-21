@@ -5,8 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-
-	"github.com/johnstcn/freshcomics/common/config"
 )
 
 var (
@@ -35,7 +33,7 @@ func Error(v ...interface{}) {
 
 func init() {
 	debugHandle := ioutil.Discard
-	if config.Cfg.Debug {
+	if os.Getenv("DEBUG") != "" {
 		debugHandle = os.Stdout
 	}
 	infoHandle := os.Stdout
