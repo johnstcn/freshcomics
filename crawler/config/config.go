@@ -14,6 +14,8 @@ type CrawlerConfig struct {
 	CheckIntervalSecs 	int 	`default:"600"`
 	CrawlDispatchSecs 	int 	`default:"10"`
 	Backoff				[]int	`default:"1,10,30"`
+	FetchTimeoutSecs	int		`default:"3"`
+	UserAgent			string	`default:""`
 }
 
 var Cfg CrawlerConfig

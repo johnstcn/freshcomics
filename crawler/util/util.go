@@ -19,6 +19,8 @@ import (
 	"github.com/johnstcn/freshcomics/crawler/models"
 )
 
+var client *http.Client
+
 // ApplyRegex returns the first match of expr in input if present.
 // If not present, returns input.
 // Also trims trailing and leading whitespace.
@@ -112,7 +114,13 @@ func fetch(url string) (io.ReadCloser, error) {
 	var err error
 	for attempt, waitSecs := range config.Cfg.Backoff {
 		log.Info(fmt.Sprintf("GET [%d/%d] %s", attempt + 1, len(config.Cfg.Backoff), url))
-		resp, err := http.Get(url)
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			log.Error("unable to create request for url:", url)
+			return nil, err
+		}
+		req.Header.Add("User-Agent", config.Cfg.UserAgent)
+		resp, err := client.Do(req)
 		if resp == nil || err != nil {
 			log.Info(fmt.Sprintf("GET %s failed: %s", url, err))
 			log.Info(fmt.Sprintf("waiting %d seconds to retry", waitSecs))
@@ -259,4 +267,14 @@ func NewSiteUpdateFromPage(sd *models.SiteDef, url string, page *xmlpath.Node) (
 		SeenAt:    seenAt,
 	}
 	return su, nil
+}
+
+func initHttpClient() {
+	client = &http.Client{
+		Timeout: time.Duration(config.Cfg.FetchTimeoutSecs) * time.Second,
+	}
+}
+
+func init() {
+	initHttpClient()
 }
