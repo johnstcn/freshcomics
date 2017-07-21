@@ -249,24 +249,14 @@ func NewSiteUpdateFromPage(sd *models.SiteDef, url string, page *xmlpath.Node) (
 		return nil, errors.Wrap(err, "error extracting title from page")
 	}
 
-	published := time.Now().UTC()
-	if sd.DateXpath != "" && sd.DateRegexp != "" && sd.DateFormat != "" {
-		publishedRaw, err := ApplyXPathAndFilter(page, sd.DateXpath, sd.DateRegexp)
-		if err != nil {
-			return nil, errors.Wrap(err, "error extracting date from page")
-		}
-		published, err = time.Parse(sd.DateFormat, publishedRaw)
-		if err != nil {
-			return nil, errors.Wrap(err, "error parsing date from page")
-		}
-	}
+	seenAt := time.Now().UTC()
 
 	su := &models.SiteUpdate{
 		SiteDefID: sd.ID,
 		Ref:       ref,
 		URL:       url,
 		Title:     title,
-		Published: published,
+		SeenAt:    seenAt,
 	}
 	return su, nil
 }

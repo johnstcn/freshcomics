@@ -99,10 +99,6 @@ func detailsHandler(resp http.ResponseWriter, req *http.Request) {
 		def.RefRegexp = req.PostFormValue("refregexp")
 		def.TitleXpath = req.PostFormValue("titlexpath")
 		def.TitleRegexp = req.PostFormValue("titleregexp")
-		def.DateXpath = req.PostFormValue("datexpath")
-		def.DateRegexp = req.PostFormValue("dateregexp")
-		def.DateFormat = req.PostFormValue("dateformat")
-		def.LastCheckedAt, _ = time.Parse("2006-01-02T15:04:05", req.PostFormValue("lastchecked"))
 		err := dao.SaveSiteDef(def)
 		if err != nil {
 			r.Success = false
@@ -130,9 +126,6 @@ func testHandler(resp http.ResponseWriter, req *http.Request) {
 		RefRegexp:     req.PostFormValue("refregexp"),
 		TitleXpath:    req.PostFormValue("titlexpath"),
 		TitleRegexp:   req.PostFormValue("titleregexp"),
-		DateXpath:     req.PostFormValue("datexpath"),
-		DateRegexp:    req.PostFormValue("dateregexp"),
-		DateFormat:    req.PostFormValue("dateformat"),
 	}
 	res := util.TestCrawl(&sd)
 	enc := json.NewEncoder(resp)

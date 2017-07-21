@@ -70,7 +70,7 @@ func (d *BackendDAO) GetSiteDefByID(id int64) (*SiteDef, error) {
 
 // GetSiteDefLastChecked returns the SiteDef with the oldest last_checked timestamp.
 func (d *BackendDAO) GetSiteDefLastChecked() (*SiteDef, error) {
-	stmt := `SELECT * FROM site_defs ORDER BY last_checked ASC LIMIT 1;`
+	stmt := `SELECT * FROM site_defs ORDER BY last_checked_at ASC LIMIT 1;`
 	def := SiteDef{}
 	err := d.DB.Get(&def, stmt)
 	if err != nil {
@@ -91,18 +91,14 @@ func (d *BackendDAO) SaveSiteDef(sd *SiteDef) error {
 		ref_xpath,
 		ref_regexp,
 		title_xpath,
-		title_regexp,
-		date_xpath,
-		date_regexp,
-		date_format
-	) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) WHERE id = $14;`
+		title_regexp
+	) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id = $11;`
 	tx, err := d.DB.Beginx()
 	if err != nil {
 		return err
 	}
 	_, err = tx.Exec(stmt, sd.Name, sd.Active, sd.NSFW, sd.StartURL, sd.LastCheckedAt,
-		sd.URLTemplate, sd.RefXpath, sd.RefRegexp, sd.TitleXpath, sd.TitleRegexp,
-		sd.DateXpath, sd.DateRegexp, sd.DateFormat, sd.ID)
+		sd.URLTemplate, sd.RefXpath, sd.RefRegexp, sd.TitleXpath, sd.TitleRegexp, sd.ID)
 	if err != nil {
 		return err
 	}
@@ -115,7 +111,7 @@ func (d *BackendDAO) SaveSiteDef(sd *SiteDef) error {
 
 // SetSiteDefLastCheckedNow sets the last_checked of a SiteDef to the given time.
 func (d *BackendDAO) SetSiteDefLastChecked(sd *SiteDef, when time.Time) error {
-	stmt := `UPDATE site_defs SET last_checked = $1 WHERE id = $2;`
+	stmt := `UPDATE site_defs SET last_checked_at = $1 WHERE id = $2;`
 	tx, err := d.DB.Beginx()
 	if err != nil {
 		return err
@@ -133,13 +129,13 @@ func (d *BackendDAO) SetSiteDefLastChecked(sd *SiteDef, when time.Time) error {
 
 // CreateSiteUpdate persists a new SiteUpdate.
 func (d *BackendDAO) CreateSiteUpdate(su *SiteUpdate) error {
-	stmt := `INSERT INTO site_updates (site_def_id, ref, url, title, published)
+	stmt := `INSERT INTO site_updates (site_def_id, ref, url, title, seen_at)
 	VALUES ($1, $2, $3, $4, $5);`
 	tx, err := d.DB.Beginx()
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(stmt, su.SiteDefID, su.Ref, su.URL, su.Title, su.Published)
+	_, err = tx.Exec(stmt, su.SiteDefID, su.Ref, su.URL, su.Title, su.SeenAt)
 	if err != nil {
 		return err
 	}
@@ -155,10 +151,10 @@ func (d *BackendDAO) GetSiteUpdatesBySiteDefID(sdid int64, limit int) (*[]SiteUp
 	var err error
 	updates := make([]SiteUpdate, 0)
 	if limit < 0 {
-		stmt := `SELECT * FROM site_updates WHERE site_def_id = $1 ORDER BY published DESC;`
+		stmt := `SELECT * FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
 		err = d.DB.Select(&updates, stmt, sdid)
 	} else {
-		stmt := `SELECT * FROM site_updates WHERE site_def_id = $1 ORDER BY published DESC LIMIT $2;`
+		stmt := `SELECT * FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT $2;`
 		err = d.DB.Select(&updates, stmt, sdid, limit)
 	}
 	if err != nil {
@@ -182,7 +178,7 @@ func (d *BackendDAO) GetSiteUpdateBySiteDefAndRef(sd *SiteDef, ref string) (*Sit
 // and nil otherwise (no SiteUpdates for SiteDef).
 func (d *BackendDAO) GetStartURLForCrawl(sd *SiteDef) (string, error) {
 	var nextUrl string
-	stmt := `SELECT URL FROM site_updates WHERE site_def_id = $1 ORDER BY Published DESC LIMIT 1;`
+	stmt := `SELECT URL FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
 	err := d.DB.Get(&nextUrl, stmt, sd.ID)
 
 	if err != nil {
@@ -197,10 +193,10 @@ func (d *BackendDAO) GetCrawlEvents(limit int) (*[]CrawlEvent, error) {
 	var err error
 	events := make([]CrawlEvent, 0)
 	if limit < 0 {
-		stmt := `SELECT * FROM crawl_events ORDER BY created DESC;`
+		stmt := `SELECT * FROM crawl_events ORDER BY created_at DESC;`
 		err = d.DB.Select(&events, stmt)
 	} else {
-		stmt := `SELECT * FROM crawl_events ORDER BY created DESC LIMIT $1;`
+		stmt := `SELECT * FROM crawl_events ORDER BY created_at DESC LIMIT $1;`
 		err = d.DB.Select(&events, stmt, limit)
 	}
 	if err != nil {
@@ -213,10 +209,10 @@ func (d *BackendDAO) GetCrawlEventsBySiteDefID(sdid int64, limit int) (*[]CrawlE
 	var err error
 	events := make([]CrawlEvent, 0)
 	if limit < 0 {
-		stmt := `SELECT * FROM crawl_events WHERE site_def_id = $1 ORDER BY created DESC;`
+		stmt := `SELECT * FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC;`
 		err = d.DB.Select(&events, stmt, sdid)
 	} else {
-		stmt := `SELECT * FROM crawl_events WHERE site_def_id = $1 ORDER BY created DESC LIMIT $2;`
+		stmt := `SELECT * FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC LIMIT $2;`
 		err = d.DB.Select(&events, stmt, sdid, limit)
 	}
 	if err != nil {

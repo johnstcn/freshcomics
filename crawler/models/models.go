@@ -17,13 +17,10 @@ CREATE TABLE IF NOT EXISTS site_defs (
 	ref_xpath 		text 		NOT NULL DEFAULT '//a[@rel="next"]/@href',
 	ref_regexp 		text 		NOT NULL DEFAULT '([^/]+)/?$',
 	title_xpath 	text 		NOT NULL DEFAULT '//title/text()',
-	title_regexp 	text 		NOT NULL DEFAULT '(.+)',
-	date_xpath 		text 		NOT NULL DEFAULT '',
-	date_regexp 	text 		NOT NULL DEFAULT '(.+)',
-	date_format 	text 		NOT NULL DEFAULT ''
+	title_regexp 	text 		NOT NULL DEFAULT '(.+)'
 );
 
-CREATE INDEX IF NOT EXISTS site_defs_last_checked_idx ON site_defs (last_checked);
+CREATE INDEX IF NOT EXISTS site_defs_last_checked_at_idx ON site_defs (last_checked_at);
 
 CREATE TABLE IF NOT EXISTS site_updates (
 	id 				serial		PRIMARY KEY,
@@ -35,7 +32,7 @@ CREATE TABLE IF NOT EXISTS site_updates (
 );
 
 CREATE INDEX IF NOT EXISTS site_updates_ref_idx ON site_updates (ref);
-CREATE INDEX IF NOT EXISTS site_updates_published_idx ON site_updates(published);
+CREATE INDEX IF NOT EXISTS site_updates_seen_at_idx ON site_updates(seen_at);
 
 CREATE TABLE IF NOT EXISTS crawl_events (
 	id				serial		PRIMARY KEY,
@@ -45,7 +42,7 @@ CREATE TABLE IF NOT EXISTS crawl_events (
 	event_info		JSONB		NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS crawl_events_created_idx ON crawl_events(created);
+CREATE INDEX IF NOT EXISTS crawl_events_created_at_idx ON crawl_events(created_at);
 CREATE INDEX IF NOT EXISTS crawl_events_event_type_idx ON crawl_events(event_type);
 `
 
@@ -61,9 +58,6 @@ type SiteDef struct {
 	RefRegexp     string
 	TitleXpath    string
 	TitleRegexp   string
-	DateXpath     string
-	DateRegexp    string
-	DateFormat    string
 }
 
 type SiteUpdate struct {
