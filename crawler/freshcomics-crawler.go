@@ -21,9 +21,15 @@ func main() {
 	defer dao.DB.Close()
 	go web.ServeAdmin(config.Cfg.Host, config.Cfg.Port)
 	for {
+		now := time.Now().UTC()
 		def, _ := dao.GetSiteDefLastChecked()
 		if def != nil {
-			shouldCheck := time.Now().Sub(def.LastChecked) > checkInterval
+			delta := now.Sub(def.LastChecked)
+			shouldCheck := delta > checkInterval
+			log.Debug("def", def.Name, "last checked", def.LastChecked)
+			log.Debug("now", now)
+			log.Debug("checkInterval:", checkInterval)
+			log.Debug("delta:", delta)
 			if shouldCheck {
 				go util.Crawl(def)
 			} else {

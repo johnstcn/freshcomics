@@ -142,7 +142,7 @@ func Crawl(sd *models.SiteDef) {
 	dao := models.GetDAO()
 	log.Info("start crawl:", sd.Name)
 	dao.CreateCrawlEvent(sd, "START_CRAWL", struct{}{})
-	start := time.Now()
+	start := time.Now().UTC()
 	dao.SetSiteDefLastChecked(sd, start)
 
 	var page *xmlpath.Node
@@ -202,7 +202,7 @@ func Crawl(sd *models.SiteDef) {
 		pageUrl = nextPageUrl
 	}
 
-	elapsed := time.Now().Sub(start)
+	elapsed := time.Now().UTC().Sub(start)
 	log.Info("end crawl:", sd.Name, elapsed)
 	dao.CreateCrawlEvent(sd, "END_CRAWL", struct{Duration time.Duration}{Duration: elapsed})
 	return
@@ -249,7 +249,7 @@ func NewSiteUpdateFromPage(sd *models.SiteDef, url string, page *xmlpath.Node) (
 		return nil, errors.Wrap(err, "error extracting title from page")
 	}
 
-	published := time.Now()
+	published := time.Now().UTC()
 	if sd.DateXpath != "" && sd.DateRegexp != "" && sd.DateFormat != "" {
 		publishedRaw, err := ApplyXPathAndFilter(page, sd.DateXpath, sd.DateRegexp)
 		if err != nil {
