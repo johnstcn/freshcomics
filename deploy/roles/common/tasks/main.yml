@@ -1,0 +1,85 @@
+---
+- name: Ensure apt keys are present
+  apt_key:
+    url: "{{ item }}"
+    state: present
+  with_items:
+    - https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    - http://nginx.org/keys/nginx_signing.key
+  become: yes
+
+- name: Ensure apt repositories are present
+  apt_repository:
+    repo: "{{ item }}"
+    state: present
+  with_items:
+    - deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
+    - deb http://nginx.org/packages/ubuntu/ xenial nginx
+  become: yes
+
+- name: Update apt cache
+  apt: update_cache=true
+  become: yes
+
+- name: Ensure required packages are installed
+  apt:
+    pkg: "{{ item }}"
+    state: installed
+  with_items:
+    - postgresql-9.6
+    - nginx
+    - python-psycopg2
+  become: yes
+
+- name: Ensure freshcomics group is present
+  group:
+    name: freshcomics
+    state: present
+
+- name: Ensure freshcomics user is present
+  user:
+    name: freshcomics
+    group: freshcomics
+    state: present
+    home: /opt/freshcomics/
+  become: yes
+
+- name: Ensure freshcomicsdb is present
+  postgresql_db:
+    name: freshcomicsdb
+    encoding: UTF-8
+  become: yes
+  become_user: postgres
+
+- name: Ensure freshcomics DB user is present
+  postgresql_user:
+    db: freshcomicsdb
+    name: freshcomics
+    password: "{{ freshcomicsdb_password }}"
+    state: present
+    priv: ALL
+  become: yes
+  become_user: postgres
+
+- name: Ensure database backups directory is present
+  file:
+    path: "/opt/freshcomics/backup"
+    state: directory
+    owner: postgres
+    group: freshcomics
+  become: yes
+
+- name: Setup backups of freshcomicsdb
+  cron:
+    name: "{{ item.name }}"
+    user: postgres
+    minute: 0
+    job: "{{ item.job }}"
+    state: present
+  become: yes
+  with_items:
+    - name: "backup freshcomicsdb"
+      job: "pg_dump freshcomicsdb | gzip - > /opt/freshcomics/backup/freshcomicsdb_$(date +%Y%m%d%H%M%S).pg.gz"
+    - name: "prune old freshcomicsdb backups"
+      job: "find /opt/freshcomics/backup/freshcomicsdb_*.pg.gz -mtime +7 -delete"
+...

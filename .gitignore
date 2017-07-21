@@ -1,3 +1,5 @@
 .idea/
+.vagrant
 crawler/gin-bin
 frontend/gin-bin
+deploy/staging/vault_password
