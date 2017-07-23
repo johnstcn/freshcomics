@@ -1,0 +1,7 @@
+---
+  freshcomics_user: freshcomics
+  freshcomics_group: freshcomics
+  freshcomics_home: /opt/freshcomics
+  freshcomics_dbname: freshcomicsdb
+  freshcomics_dbhost: localhost
+...

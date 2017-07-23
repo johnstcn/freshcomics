@@ -1,0 +1,69 @@
+---
+  - name: build executable locally
+    delegate_to: localhost
+    shell: CGO_ENABLED=0 go build -ldflags="-s -w" freshcomics-frontend.go
+    args:
+      chdir: ../../frontend
+    tags:
+      - provision
+      - deploy
+
+  - name: copy binary to destination
+    copy:
+      src: ../../frontend/freshcomics-frontend
+      dest: "{{ freshcomics_home }}/freshcomics-frontend"
+      owner: "{{ freshcomics_user }}"
+      group: "{{ freshcomics_group }}"
+      mode: 0744
+    become: yes
+    notify: restart freshcomics-frontend
+    tags:
+      - provision
+      - deploy
+
+  - name: ensure systemd service file is present for freshcomics-frontend
+    template:
+      src: freshcomics-frontend.service.j2
+      dest: /etc/systemd/system/freshcomics-frontend.service
+      owner: root
+      group: root
+      mode: 0640
+    become: yes
+    notify: restart freshcomics-frontend
+    tags:
+      - provision
+
+  - name: ensure env file is present for freshcomics-frontend
+    template:
+      src: freshcomics-frontend.env.j2
+      dest: /opt/freshcomics/freshcomics-frontend.env
+      owner: root
+      group: root
+      mode: 0640
+    become: yes
+    notify: restart freshcomics-frontend
+    tags:
+      - provision
+
+  - name: ensure freshcomics-frontend service is enabled
+    systemd:
+      name: freshcomics-frontend.service
+      enabled: yes
+      masked: no
+      daemon_reload: yes
+    become: yes
+    notify: restart freshcomics-frontend
+    tags:
+      - provision
+
+  - name: ensure nginx config is present for freshcomics-frontend
+    template:
+      src: freshcomics-frontend.conf.j2
+      dest: /etc/nginx/conf.d/freshcomics-frontend.conf
+      owner: root
+      group: root
+    become: yes
+    notify: restart nginx
+    tags:
+      - provision
+...

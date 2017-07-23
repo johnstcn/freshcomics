@@ -1,0 +1,11 @@
+[Unit]
+Description=FreshComics Frontend
+After=network.target
+
+[Service]
+Type=simple
+User=freshcomics
+WorkingDirectory={{ freshcomics_home }}
+EnvironmentFile=/opt/freshcomics/freshcomics-frontend.env
+ExecStart=/opt/freshcomics/freshcomics-frontend
+Restart=on-failure

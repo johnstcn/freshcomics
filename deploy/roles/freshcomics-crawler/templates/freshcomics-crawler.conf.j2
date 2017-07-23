@@ -1,5 +1,5 @@
 server {
-    listen 80 default_server;
+    listen 80;
     server_name {{ freshcomics_crawler_servername }};
     access_log /var/log/nginx/freshcomics-crawler.access.log main;
     location / {

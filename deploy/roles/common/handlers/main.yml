@@ -1,0 +1,13 @@
+---
+  - name: update apt cache
+    apt: update_cache=true
+    become: yes
+    tags:
+      - provision
+
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
+    become: yes
+...

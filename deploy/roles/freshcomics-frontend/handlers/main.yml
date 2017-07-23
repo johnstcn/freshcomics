@@ -1,0 +1,13 @@
+---
+- name: restart nginx
+  service:
+    name: nginx
+    state: restarted
+  become: yes
+
+- name: restart freshcomics-frontend
+  service:
+    name: freshcomics-frontend
+    state: restarted
+  become: yes
+...

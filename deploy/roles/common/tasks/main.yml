@@ -5,21 +5,34 @@
     state: present
   with_items:
     - https://www.postgresql.org/media/keys/ACCC4CF8.asc
-    - http://nginx.org/keys/nginx_signing.key
+    - https://nginx.org/keys/nginx_signing.key
   become: yes
+  tags:
+    - provision
 
-- name: Ensure apt repositories are present
+- name: Ensure postgresql apt repository is present
   apt_repository:
-    repo: "{{ item }}"
+    repo: deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
     state: present
-  with_items:
-    - deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
-    - deb http://nginx.org/packages/ubuntu/ xenial nginx
+    update_cache: no
   become: yes
+  notify:
+    - update apt cache
+  tags:
+    - provision
 
-- name: Update apt cache
-  apt: update_cache=true
+- name: Ensure nginx apt repository is present
+  apt_repository:
+    repo: deb http://nginx.org/packages/ubuntu/ xenial nginx
+    state: present
+    update_cache: no
   become: yes
+  notify:
+    - update apt cache
+  tags:
+    - provision
+
+- meta: flush_handlers
 
 - name: Ensure required packages are installed
   apt:
@@ -31,12 +44,16 @@
     - python-psycopg2
     - python-passlib
   become: yes
+  tags:
+    - provision
 
 - name: Ensure freshcomics group is present
   group:
     name: "{{ freshcomics_group }}"
     state: present
   become: yes
+  tags:
+    - provision
 
 - name: Ensure freshcomics user is present
   user:
@@ -45,6 +62,8 @@
     state: present
     home: "{{ freshcomics_home }}"
   become: yes
+  tags:
+    - provision
 
 - name: Ensure freshcomicsdb is present
   postgresql_db:
@@ -52,6 +71,8 @@
     encoding: UTF-8
   become: yes
   become_user: postgres
+  tags:
+    - provision
 
 - name: Ensure freshcomics DB user is present
   postgresql_user:
@@ -62,14 +83,18 @@
     priv: ALL
   become: yes
   become_user: postgres
+  tags:
+    - provision
 
 - name: Ensure database backups directory is present
   file:
-    path: "/opt/freshcomics/backup"
+    path: "{{ freshcomics_home }}/backup"
     state: directory
     owner: postgres
     group: "{{ freshcomics_group }}"
   become: yes
+  tags:
+    - provision
 
 - name: Setup backups of freshcomicsdb
   cron:
@@ -85,11 +110,30 @@
       job: "pg_dump {{ freshcomics_dbname }} | gzip - > {{ freshcomics_home}}/backup/{{ freshcomics_dbname }}_$(date +%Y%m%d%H%M%S).pg.gz"
     - name: "prune old {{ freshcomics_dbname }} backups"
       job: "find {{ freshcomics_home }}/backup/{{ freshcomics_dbname }}_*.pg.gz -mtime +7 -delete"
+  tags:
+    - provision
 
 - name: Ensure default nginx.conf is absent
   file:
     path: /etc/nginx/conf.d/default.conf
     state: absent
   become: yes
+  notify:
+    - restart nginx
+  tags:
+    - provision
+
+- name: Ensure custom default nginx conf is present
+  copy:
+    src: nginx_default.conf
+    dest: /etc/nginx/conf.d/_.conf
+    owner: root
+    group: root
+    mode: 0644
+  become: yes
+  notify:
+    - restart nginx
+  tags:
+    - provision
 
 ...
