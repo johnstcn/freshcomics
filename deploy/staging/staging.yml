@@ -4,6 +4,6 @@
     - ./secrets.yml
   roles:
     - common
-    - freshcomics-frontend
-    - freshcomics-crawler
+    - { role: freshcomics-frontend, freshcomics_frontend_servername: freshcomics.192.168.12.34.xip.io }
+    - { role: freshcomics-crawler, freshcomics_crawler_servername: admin.freshcomics.192.168.12.34.xip.io }
 ...
