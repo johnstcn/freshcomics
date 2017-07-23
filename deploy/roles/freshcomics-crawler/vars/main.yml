@@ -4,4 +4,11 @@
   freshcomics_home: /opt/freshcomics
   freshcomics_dbname: freshcomicsdb
   freshcomics_dbhost: localhost
+  freshcomics_crawler_admin_user: freshcomics
+  freshcomics_crawler_host: 127.0.0.1
+  freshcomics_crawler_port: 3000
+  freshcomics_crawler_checkintervalsecs: 600
+  freshcomics_crawler_crawldispatchsecs: 10
+  freshcomics_crawler_backoff: 1,1
+  freshcomics_crawler_servername: admin.freshcomics-staging.org
 ...
