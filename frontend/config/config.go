@@ -27,5 +27,4 @@ func init() {
 	log.Println("[config] Host:", Cfg.Host)
 	log.Println("[config] Port:", Cfg.Port)
 	log.Println("[config] RefreshIntervalSecs:", Cfg.RefreshIntervalSecs)
-	log.Println("[config] DSN:", Cfg.DSN)
 }
