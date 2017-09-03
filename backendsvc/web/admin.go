@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/johnstcn/freshcomics/common/log"
-	"github.com/johnstcn/freshcomics/crawler/models"
-	"github.com/johnstcn/freshcomics/crawler/util"
+	"github.com/johnstcn/freshcomics/backendsvc/models"
+	"github.com/johnstcn/freshcomics/workers/util"
 	"github.com/gorilla/mux"
 )
 
@@ -34,7 +34,7 @@ func siteDefsHandler(resp http.ResponseWriter, req *http.Request) {
 type detailsResponse struct {
 	SiteDef *models.SiteDef
 	Updates *[]models.SiteUpdate
-	Events *[]models.CrawlEvent
+	Events *[]models.SiteCrawl
 	Success bool
 	Message string
 }

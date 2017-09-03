@@ -15,8 +15,8 @@ import (
 	"gopkg.in/xmlpath.v2"
 
 	"github.com/johnstcn/freshcomics/common/log"
-	"github.com/johnstcn/freshcomics/crawler/config"
-	"github.com/johnstcn/freshcomics/crawler/models"
+	"github.com/johnstcn/freshcomics/backendsvc/config"
+	"github.com/johnstcn/freshcomics/backendsvc/models"
 )
 
 var client *http.Client

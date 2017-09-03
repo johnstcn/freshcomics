@@ -10,7 +10,7 @@
 
   - name: copy binary to destination
     copy:
-      src: ../../crawler/freshcomics-crawler
+      src: ../../backendsvc/freshcomics-backendsvc
       dest: "{{ freshcomics_home }}/freshcomics-crawler"
       owner: "{{ freshcomics_user }}"
       group: "{{ freshcomics_group }}"

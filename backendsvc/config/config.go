@@ -21,7 +21,7 @@ type CrawlerConfig struct {
 var Cfg CrawlerConfig
 
 func init() {
-	err := envconfig.Process("freshcomics_crawler", &Cfg)
+	err := envconfig.Process("freshcomics_backendsvc", &Cfg)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

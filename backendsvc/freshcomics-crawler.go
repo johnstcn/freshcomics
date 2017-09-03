@@ -5,10 +5,10 @@ package main
 import (
 	"time"
 
-	"github.com/johnstcn/freshcomics/crawler/config"
-	"github.com/johnstcn/freshcomics/crawler/models"
-	"github.com/johnstcn/freshcomics/crawler/util"
-	"github.com/johnstcn/freshcomics/crawler/web"
+	"github.com/johnstcn/freshcomics/backendsvc/config"
+	"github.com/johnstcn/freshcomics/backendsvc/models"
+	"github.com/johnstcn/freshcomics/workers/util"
+	"github.com/johnstcn/freshcomics/backendsvc/web"
 	"github.com/johnstcn/freshcomics/common/log"
 )
 
