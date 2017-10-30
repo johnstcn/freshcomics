@@ -5,3 +5,4 @@ crawler/freshcomics-crawler
 frontend/gin-bin
 frontend/freshcomics-frontend
 *.retry
+vendor/
