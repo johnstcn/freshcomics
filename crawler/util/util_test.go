@@ -108,11 +108,11 @@ func TestFetchPage(t *testing.T) {
 		http.ListenAndServe("localhost:8888", http.DefaultServeMux)
 	}()
 	time.Sleep(100 * time.Millisecond)
-	_, err := FetchPage("http://localhost:8888")
+	_, err := FetchAndParse("http://localhost:8888")
 	assert.Nil(t, err)
 }
 
 func TestFetchPageGetFail(t *testing.T) {
-	_, err := FetchPage("http://localhost:9999")
+	_, err := FetchAndParse("http://localhost:9999")
 	assert.NotNil(t, err)
 }
