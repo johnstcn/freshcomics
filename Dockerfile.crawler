@@ -1,0 +1,28 @@
+FROM golang:1.9.2-alpine
+RUN mkdir -p /go/bin \
+  && mkdir -p /go/pkg \
+  && mkdir -p /go/src
+
+ENV GOPATH=/go
+ENV PATH=$GOPATH/bin:$PATH
+
+RUN mkdir -p /go/src/github.com/johnstcn/freshcomics
+ADD . $GOPATH/src/github.com/johnstcn/freshcomics
+
+WORKDIR /go/src/github.com/johnstcn/freshcomics
+RUN go build crawler/freshcomics-crawler.go
+
+FROM alpine:latest
+MAINTAINER Cian Johnston <public@cianjohnston.ie>
+COPY --from=0 /go/src/github.com/johnstcn/freshcomics/freshcomics-crawler .
+
+ENV FRESHCOMICS_CRAWLER_HOST 0.0.0.0
+ENV FRESHCOMICS_CRAWLER_PORT 8001
+ENV FRESHCOMICS_CRAWLER_DSN "host=db user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable"
+FRESHCOMICS_CRAWLER_CHECKINTERVALSECS 60
+FRESHCOMICS_CRAWLER_CRAWLDISPATCHSECS 1
+FRESHCOMICS_CRAWLER_BACKOFF "1,1"
+
+EXPOSE 8001
+
+ENTRYPOINT ["/freshcomics-crawler"]

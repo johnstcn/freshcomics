@@ -11,11 +11,15 @@ ADD . $GOPATH/src/github.com/johnstcn/freshcomics
 
 WORKDIR /go/src/github.com/johnstcn/freshcomics
 RUN go build frontend/freshcomics-frontend.go
-#RUN go build crawler/freshcomics-crawler.go
 
 FROM alpine:latest
 MAINTAINER Cian Johnston <public@cianjohnston.ie>
 COPY --from=0 /go/src/github.com/johnstcn/freshcomics/freshcomics-frontend .
-#COPY --from=0 /go/src/github.com/johnstcn/freshcomics/freshcomics-crawler .
+
+ENV FRESHCOMICS_FRONTEND_HOST 0.0.0.0
+ENV FRESHCOMICS_FRONTEND_PORT 8000
+ENV FRESHCOMICS_FRONTEND_DSN "host=db user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable"
+
+EXPOSE 8000
 
 ENTRYPOINT ["/freshcomics-frontend"]

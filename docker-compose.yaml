@@ -1,0 +1,36 @@
+version: '3'
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: johnstcn/freshcomics-frontend:latest
+    depends_on:
+      - db
+    networks:
+      - freshcomics-network
+
+  crawler:
+    build:
+      context: .
+      dockerfile: Dockerfile.crawler
+    image: johnstcn/freshcomics-crawler:latest
+    depends_on:
+      - db
+    networks:
+      - freshcomics-network
+
+  db:
+    image: postgres:9.4
+    ports:
+      - "5432/tcp"
+    restart: always
+    networks:
+      - freshcomics-network
+    environment:
+      - DB_USER=freshcomics
+      - DB_PASS=freshcomics_password
+      - DB_NAME=freshcomicsdb
+
+networks:
+  freshcomics-network:
