@@ -1,6 +1,8 @@
 version: '3'
 services:
   frontend:
+    ports:
+      - "8000:8000"
     build:
       context: .
       dockerfile: Dockerfile.frontend
@@ -11,6 +13,8 @@ services:
       - freshcomics-network
 
   crawler:
+    ports:
+      - "8001:8001"
     build:
       context: .
       dockerfile: Dockerfile.crawler
@@ -23,14 +27,14 @@ services:
   db:
     image: postgres:9.4
     ports:
-      - "5432/tcp"
+      - "5432"
     restart: always
     networks:
       - freshcomics-network
     environment:
-      - DB_USER=freshcomics
-      - DB_PASS=freshcomics_password
-      - DB_NAME=freshcomicsdb
+      - POSTGRES_USER=freshcomics
+      - POSTGRES_PASSWORD=freshcomics_password
+      - POSTGRES_DB=freshcomicsdb
 
 networks:
   freshcomics-network:
