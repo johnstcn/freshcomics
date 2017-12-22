@@ -89,7 +89,18 @@ func (d *FrontendDAO) RecordClick(updateID string, addr net.IP) error {
 
 func init() {
 	dsn := config.Cfg.DSN
-	db := sqlx.MustConnect("postgres", dsn)
+	var db *sqlx.DB
+	var err error
+	for {
+		db, err = sqlx.Connect("postgres", dsn)
+		if err != nil {
+			log.Info(err)
+			<-time.After(1 * time.Second)
+			continue
+		}
+		log.Info("Connected to database")
+		break
+	}
 	log.Info("Connected to database")
 	db.MapperFunc(snakecase.SnakeCase)
 	db.MustExec(schema)
