@@ -256,7 +256,6 @@ func init() {
 		log.Info("Connected to database")
 		break
 	}
-	db.MustExec(schema)
 	db.MapperFunc(snakecase.SnakeCase)
 	dao = &BackendDAO{DB: db}
 }

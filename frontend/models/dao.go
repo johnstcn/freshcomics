@@ -103,7 +103,6 @@ func init() {
 	}
 	log.Info("Connected to database")
 	db.MapperFunc(snakecase.SnakeCase)
-	db.MustExec(schema)
 
 	geoIPRefresh := time.Duration(config.Cfg.GeoIPRefreshSecs) * time.Second
 	geoIPFetchTimeout := time.Duration(config.Cfg.GeoIPFetchTimeoutSecs) * time.Second
