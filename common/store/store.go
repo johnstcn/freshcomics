@@ -1,21 +1,19 @@
 package store
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
 	"time"
 
-	_ "github.com/lib/pq"
-	"github.com/jmoiron/sqlx"
 	"github.com/azer/snakecase"
-	"github.com/fiorix/freegeoip"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 
 	"github.com/johnstcn/freshcomics/common/log"
-	"github.com/johnstcn/freshcomics/frontend/config"
-	"database/sql"
-	"encoding/json"
-	"errors"
 )
 
 type Store interface {
@@ -25,6 +23,7 @@ type Store interface {
 	CreateSiteDef() (*SiteDef, error)
 	GetAllSiteDefs(includeInactive bool) (*[]SiteDef, error)
 	SaveSiteDef(sd *SiteDef) error
+	GetSiteDefByID(id int64) (*SiteDef, error)
 	GetSiteDefLastChecked() (*SiteDef, error)
 	SetSiteDefLastChecked(sd *SiteDef, when time.Time) error
 	CreateSiteUpdate(su *SiteUpdate) error
@@ -58,7 +57,7 @@ func NewStore(dsn string) (Store, error) {
 	for {
 		db, err = sqlx.Connect("postgres", dsn)
 		if err != nil {
-			log.Info(err)
+			log.Info(errors.Wrapf(err, "could not connect to database"))
 			<-time.After(1 * time.Second)
 			continue
 		}

@@ -16,7 +16,7 @@ import (
 
 	"github.com/johnstcn/freshcomics/common/log"
 	"github.com/johnstcn/freshcomics/crawler/config"
-	"github.com/johnstcn/freshcomics/crawler/models"
+	"github.com/johnstcn/freshcomics/common/store"
 )
 
 var client *http.Client
@@ -64,7 +64,7 @@ func ApplyXPathAndFilter(page *xmlpath.Node, xpath string, regex string) (string
 }
 
 // GetNextPageURL returns the next page URL according to sd for the given page.
-func GetNextPageURL(sd *models.SiteDef, page *xmlpath.Node) (string, error) {
+func GetNextPageURL(sd *store.SiteDef, page *xmlpath.Node) (string, error) {
 	nextRef, err := ApplyXPathAndFilter(page, sd.RefXpath, sd.RefRegexp)
 	if err != nil {
 		return "", err
@@ -146,18 +146,17 @@ func FetchAndParse(url string) (*xmlpath.Node, error) {
 }
 
 // Crawl runs an incremental crawl of sd.
-func Crawl(sd *models.SiteDef) {
-	dao := models.GetDAO()
+func Crawl(s store.Store, sd *store.SiteDef) {
 	log.Info("start crawl:", sd.Name)
-	dao.CreateCrawlEvent(sd, "START_CRAWL", struct{}{})
+	s.CreateCrawlEvent(sd, "START_CRAWL", struct{}{})
 	start := time.Now().UTC()
-	dao.SetSiteDefLastChecked(sd, start)
+	s.SetSiteDefLastChecked(sd, start)
 
 	var page *xmlpath.Node
 	var pageUrl string
 	var err error
 
-	pageUrl, err = dao.GetStartURLForCrawl(sd)
+	pageUrl, err = s.GetStartURLForCrawl(sd)
 	// on the first crawl, persist SiteUpdate found on that page
 	if err != nil {
 		log.Info("initial crawl")
@@ -169,7 +168,7 @@ func Crawl(sd *models.SiteDef) {
 		if err != nil {
 			log.Error("error fetching page:", err)
 			evt := struct{URL, Error string}{URL: pageUrl, Error: err.Error()}
-			dao.CreateCrawlEvent(sd, "ERR_FETCH", evt)
+			s.CreateCrawlEvent(sd, "ERR_FETCH", evt)
 			break
 		}
 
@@ -177,21 +176,21 @@ func Crawl(sd *models.SiteDef) {
 		if err != nil {
 			log.Error("error creating new SiteUpdate from pageUrl:", err)
 			evt := struct{URL, Error string}{URL: pageUrl, Error: err.Error()}
-			dao.CreateCrawlEvent(sd, "ERR_CREATENEW", evt)
+			s.CreateCrawlEvent(sd, "ERR_CREATENEW", evt)
 			break
 		}
 
-		existingUpdate, err := dao.GetSiteUpdateBySiteDefAndRef(sd, newUpdate.Ref)
+		existingUpdate, err := s.GetSiteUpdateBySiteDefAndRef(sd, newUpdate.Ref)
 		if existingUpdate == nil {
-			err = dao.CreateSiteUpdate(newUpdate)
+			err = s.CreateSiteUpdate(newUpdate)
 			if err != nil {
 				log.Error("error persisting new SiteUpdate:", err)
 				evt := struct{URL, Error string}{URL: pageUrl, Error: err.Error()}
-				dao.CreateCrawlEvent(sd, "ERR_PERSISTNEW", evt)
+				s.CreateCrawlEvent(sd, "ERR_PERSISTNEW", evt)
 				break
 			}
 			evt := struct{Ref string}{Ref: newUpdate.Ref}
-			dao.CreateCrawlEvent(sd, "PERSISTREF", evt)
+			s.CreateCrawlEvent(sd, "PERSISTREF", evt)
 		} else {
 			log.Info("already seen:", newUpdate.Ref)
 		}
@@ -204,7 +203,7 @@ func Crawl(sd *models.SiteDef) {
 		}
 		if pageUrl == nextPageUrl {
 			log.Error("pagination loop detected")
-			dao.CreateCrawlEvent(sd, "LOOP", fmt.Sprintf("url=%", pageUrl))
+			s.CreateCrawlEvent(sd, "LOOP", fmt.Sprintf("url=%", pageUrl))
 			break
 		}
 		pageUrl = nextPageUrl
@@ -212,18 +211,18 @@ func Crawl(sd *models.SiteDef) {
 
 	elapsed := time.Now().UTC().Sub(start)
 	log.Info("end crawl:", sd.Name, elapsed)
-	dao.CreateCrawlEvent(sd, "END_CRAWL", struct{Duration time.Duration}{Duration: elapsed})
+	s.CreateCrawlEvent(sd, "END_CRAWL", struct{Duration time.Duration}{Duration: elapsed})
 	return
 }
 
 type TestCrawlResult struct {
 	Error   string
 	NextURL string
-	Result  *models.SiteUpdate
+	Result  *store.SiteUpdate
 }
 
 // TestCrawl runs a test of a single URL without persisting anything
-func TestCrawl(sd *models.SiteDef) *TestCrawlResult {
+func TestCrawl(sd *store.SiteDef) *TestCrawlResult {
 	res := &TestCrawlResult{}
 	page, err := FetchAndParse(sd.StartURL)
 	if err != nil {
@@ -246,7 +245,7 @@ func TestCrawl(sd *models.SiteDef) *TestCrawlResult {
 }
 
 // NewSiteUpdateFromPage attempts to create a new SiteUpdate from the given URL. Does not persist the new item.
-func NewSiteUpdateFromPage(sd *models.SiteDef, url string, page *xmlpath.Node) (*models.SiteUpdate, error) {
+func NewSiteUpdateFromPage(sd *store.SiteDef, url string, page *xmlpath.Node) (*store.SiteUpdate, error) {
 	ref, err := ApplyRegex(url, sd.RefRegexp)
 	if err != nil {
 		return nil, errors.Wrap(err, "error extracting ref from url")
@@ -259,7 +258,7 @@ func NewSiteUpdateFromPage(sd *models.SiteDef, url string, page *xmlpath.Node) (
 
 	seenAt := time.Now().UTC()
 
-	su := &models.SiteUpdate{
+	su := &store.SiteUpdate{
 		SiteDefID: sd.ID,
 		Ref:       ref,
 		URL:       url,

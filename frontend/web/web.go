@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"net"
@@ -16,43 +17,58 @@ import (
 	"github.com/tdewolff/minify/css"
 
 	"github.com/johnstcn/freshcomics/common/log"
+	"github.com/johnstcn/freshcomics/common/store"
 	"github.com/johnstcn/freshcomics/frontend/config"
-	"github.com/johnstcn/freshcomics/frontend/models"
-	"errors"
 )
 
-var tpl *template.Template
-var comics *[]models.Comic
-var rtr *mux.Router
+type frontend struct {
+	mux.Router
+	store store.Store
+	comics *[]store.Comic
+	tpl *template.Template
+}
 
-func updateComics() {
+func NewFrontend(s store.Store) *frontend {
+	comics := make([]store.Comic, 0)
+	f := &frontend{
+		store: s,
+		comics: &comics,
+	}
+
+	f.initTemplates()
+	f.initRoutes()
+	go f.UpdateComics()
+
+	return f
+}
+
+func (f *frontend) UpdateComics() {
 	interval := time.Duration(config.Cfg.RefreshIntervalSecs) * time.Second
 	for {
 		log.Info("updating comic list")
-		dao := models.GetDAO()
-		newComics, err := dao.GetComics()
+		newComics, err := f.store.GetComics()
 		if err != nil {
 			log.Error("could not update comic list:", err)
 		} else {
-			comics = newComics
+			f.comics = newComics
 		}
 		time.Sleep(interval)
 	}
 }
 
-func indexHandler(resp http.ResponseWriter, req *http.Request) {
+func (f *frontend) indexHandler(resp http.ResponseWriter, req *http.Request) {
 	data := struct{
-		Comics *[]models.Comic
+		Comics *[]store.Comic
 	}{
-		Comics: comics,
+		Comics: f.comics,
 	}
-	err := tpl.ExecuteTemplate(resp, "frontend_index", &data)
+	err := f.tpl.ExecuteTemplate(resp, "frontend_index", &data)
 	if err != nil {
 		log.Error("could not execute frontend_index template:", err)
 	}
 }
 
-func remoteIP(req *http.Request) (net.IP, error) {
+func (f *frontend) remoteIP(req *http.Request) (net.IP, error) {
 	fwdHdr := req.Header.Get("X-Forwarded-For")
 	log.Debug("X-Forwarded-For header:", fwdHdr)
 	fwdAddr := regexp.MustCompile(`^\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)`).FindString(fwdHdr)
@@ -63,20 +79,19 @@ func remoteIP(req *http.Request) (net.IP, error) {
 	return addr, nil
 }
 
-func redirectHandler(resp http.ResponseWriter, req *http.Request) {
-	dao := models.GetDAO()
+func (f *frontend) redirectHandler(resp http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	updateId := vars["id"]
-	addr, err := remoteIP(req)
+	addr, err := f.remoteIP(req)
 	if err != nil {
 		log.Error(err)
 	} else {
-		err = dao.RecordClick(updateId, addr)
+		err = f.store.RecordClick(updateId, addr)
 		if err != nil {
 			log.Error("error recording click:", err)
 		}
 	}
-	url, err := dao.GetRedirectURL(updateId)
+	url, err := f.store.GetRedirectURL(updateId)
 	if err != nil {
 		http.NotFound(resp, req)
 		return
@@ -84,7 +99,7 @@ func redirectHandler(resp http.ResponseWriter, req *http.Request) {
 	http.Redirect(resp, req, url, 301)
 }
 
-func cssHandler(resp http.ResponseWriter, req *http.Request) {
+func (f *frontend) cssHandler(resp http.ResponseWriter, req *http.Request) {
 	m := minify.New()
 	m.AddFunc("text/css", css.Minify)
 	log.Debug(req.RequestURI)
@@ -100,19 +115,13 @@ func cssHandler(resp http.ResponseWriter, req *http.Request) {
 	resp.Write(minified)
 }
 
-func ServeFrontend(host string, port int) {
-	listenAddress := fmt.Sprintf("%s:%d", host, port)
-	log.Info("Listening on", listenAddress)
-	http.ListenAndServe(listenAddress, rtr)
-}
-
-func initTemplates() {
+func (f *frontend) initTemplates() {
 	m := minify.New()
 	m.AddFunc("text/html", html.Minify)
 	fm := template.FuncMap{
 		"humanDuration": humanize.Time,
 	}
-	tpl = template.New("").Funcs(fm)
+	tpl := template.New("").Funcs(fm)
 	for _, an := range AssetNames() {
 		// only minify html here
 		if !strings.HasSuffix(an, ".gohtml") {
@@ -128,15 +137,8 @@ func initTemplates() {
 	}
 }
 
-func initRoutes() {
-	rtr = mux.NewRouter()
-	rtr.HandleFunc("/", indexHandler)
-	rtr.HandleFunc("/view/{id:[0-9]+}", redirectHandler)
-	rtr.HandleFunc("/style.css", cssHandler)
-}
-
-func init() {
-	go updateComics()
-	initTemplates()
-	initRoutes()
+func (f *frontend) initRoutes() {
+	f.HandleFunc("/", f.indexHandler)
+	f.HandleFunc("/view/{id:[0-9]+}", f.redirectHandler)
+	f.HandleFunc("/style.css", f.cssHandler)
 }

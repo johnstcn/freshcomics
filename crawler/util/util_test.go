@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/xmlpath.v2"
 
-	"github.com/johnstcn/freshcomics/crawler/models"
+	"github.com/johnstcn/freshcomics/common/store"
 )
 
 func TestApplyRegex(t *testing.T) {
@@ -68,7 +68,7 @@ func TestApplyXPathAndFilterNoMatch(t *testing.T) {
 
 func TestGetNextPageURL(t *testing.T) {
 	page, _ := xmlpath.ParseHTML(strings.NewReader(`<html><body><a href="/next"></a></body></html>`))
-	def := &models.SiteDef{
+	def := &store.SiteDef{
 		RefXpath: `//a/@href`,
 		RefRegexp: `/(.+)`,
 		URLTemplate: "http://example.com/%s",
@@ -80,7 +80,7 @@ func TestGetNextPageURL(t *testing.T) {
 
 func TestGetNextPageURLNoMatch(t *testing.T) {
 	page, _ := xmlpath.ParseHTML(strings.NewReader(`<html><body><a href="/next"></a></body></html>`))
-	def := &models.SiteDef{
+	def := &store.SiteDef{
 		RefXpath: `//a/@href`,
 		RefRegexp: `/(.+)`,
 		URLTemplate: "http://example.com/%s",

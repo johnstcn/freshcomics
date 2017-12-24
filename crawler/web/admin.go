@@ -8,19 +8,34 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/johnstcn/freshcomics/common/log"
-	"github.com/johnstcn/freshcomics/crawler/models"
-	"github.com/johnstcn/freshcomics/crawler/util"
 	"github.com/gorilla/mux"
+
+	"github.com/johnstcn/freshcomics/common/log"
+	"github.com/johnstcn/freshcomics/crawler/util"
+	"github.com/johnstcn/freshcomics/common/store"
 )
 
 var tpl *template.Template
 var rtr *mux.Router
 
+type Admin struct {
+	mux.Router
+	store store.Store
+	tpl *template.Template
+}
+
+func NewAdmin(s store.Store) *Admin {
+	a := &Admin{
+		store: s,
+	}
+	a.initTemplates()
+	a.initRoutes()
+	return a
+}
+
 // Shows a list of SiteDefs
-func siteDefsHandler(resp http.ResponseWriter, req *http.Request) {
-	dao := models.GetDAO()
-	defs, err := dao.GetAllSiteDefs(true)
+func (a *Admin) siteDefsHandler(resp http.ResponseWriter, req *http.Request) {
+	defs, err := a.store.GetAllSiteDefs(true)
 	if err != nil {
 		log.Error(err)
 	}
@@ -32,23 +47,22 @@ func siteDefsHandler(resp http.ResponseWriter, req *http.Request) {
 }
 
 type detailsResponse struct {
-	SiteDef *models.SiteDef
-	Updates *[]models.SiteUpdate
-	Events *[]models.CrawlEvent
+	SiteDef *store.SiteDef
+	Updates *[]store.SiteUpdate
+	Events *[]store.CrawlEvent
 	Success bool
 	Message string
 }
 
-func newSiteDefHandler(resp http.ResponseWriter, req *http.Request) {
+func (a *Admin) newSiteDefHandler(resp http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
-		dao := models.GetDAO()
 		name := req.PostFormValue("name")
-		def, err := dao.CreateSiteDef()
+		def, err := a.store.CreateSiteDef()
 		if err != nil {
 			log.Error(err)
 		}
 		def.Name = name
-		err = dao.SaveSiteDef(def)
+		err = a.store.SaveSiteDef(def)
 		if err != nil {
 			log.Error(err)
 		}
@@ -60,24 +74,23 @@ func newSiteDefHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func detailsHandler(resp http.ResponseWriter, req *http.Request) {
-	dao := models.GetDAO()
+func (a *Admin) detailsHandler(resp http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
 		log.Error(err)
 		http.Redirect(resp, req, "/", 500)
 	}
-	def, err := dao.GetSiteDefByID(int64(id))
+	def, err := a.store.GetSiteDefByID(int64(id))
 	if err != nil {
 		log.Error(err)
 		http.Redirect(resp, req, "/", 404)
 	}
-	updates, err := dao.GetSiteUpdatesBySiteDefID(def.ID, 10)
+	updates, err := a.store.GetSiteUpdatesBySiteDefID(def.ID, 10)
 	if err != nil {
 		log.Error(err)
 	}
-	events, err := dao.GetCrawlEventsBySiteDefID(def.ID, 10)
+	events, err := a.store.GetCrawlEventsBySiteDefID(def.ID, 10)
 	if err != nil {
 		log.Error(err)
 	}
@@ -99,7 +112,7 @@ func detailsHandler(resp http.ResponseWriter, req *http.Request) {
 		def.RefRegexp = req.PostFormValue("refregexp")
 		def.TitleXpath = req.PostFormValue("titlexpath")
 		def.TitleRegexp = req.PostFormValue("titleregexp")
-		err := dao.SaveSiteDef(def)
+		err := a.store.SaveSiteDef(def)
 		if err != nil {
 			r.Success = false
 			r.Message = err.Error()
@@ -113,8 +126,8 @@ func detailsHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func testHandler(resp http.ResponseWriter, req *http.Request) {
-	sd := models.SiteDef{
+func (a *Admin) testHandler(resp http.ResponseWriter, req *http.Request) {
+	sd := store.SiteDef{
 		ID:            0,
 		Name:          req.PostFormValue("name"),
 		Active:        false,
@@ -133,18 +146,17 @@ func testHandler(resp http.ResponseWriter, req *http.Request) {
 	enc.Encode(res)
 }
 
-func forceCrawlHandler(resp http.ResponseWriter, req *http.Request) {
+func (a *Admin) forceCrawlHandler(resp http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
-		dao := models.GetDAO()
 		req.ParseForm()
 		defId, _ := strconv.Atoi(req.Form.Get("id"))
-		sd, err := dao.GetSiteDefByID(int64(defId))
+		sd, err := a.store.GetSiteDefByID(int64(defId))
 		if err != nil {
 			log.Error("unknown sitedef id:", err)
 			resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		dao.SetSiteDefLastChecked(sd, time.Unix(0, 0))
+		a.store.SetSiteDefLastChecked(sd, time.Unix(0, 0))
 		resp.WriteHeader(http.StatusOK)
 		log.Info("manual crawl initiated:", sd.Name)
 	} else {
@@ -152,11 +164,10 @@ func forceCrawlHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func siteDefEventsHandler(resp http.ResponseWriter, req *http.Request) {
-	dao := models.GetDAO()
+func (a *Admin) siteDefEventsHandler(resp http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	defId, _ := strconv.Atoi(vars["id"])
-	events, err := dao.GetCrawlEventsBySiteDefID(int64(defId), -1)
+	events, err := a.store.GetCrawlEventsBySiteDefID(int64(defId), -1)
 	if err != nil {
 		log.Error(err)
 	}
@@ -165,11 +176,10 @@ func siteDefEventsHandler(resp http.ResponseWriter, req *http.Request) {
 	enc.Encode(events)
 }
 
-func siteDefUpdatesHandler(resp http.ResponseWriter, req *http.Request) {
-	dao := models.GetDAO()
+func (a *Admin) siteDefUpdatesHandler(resp http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	defId, _ := strconv.Atoi(vars["id"])
-	updates, err := dao.GetSiteUpdatesBySiteDefID(int64(defId), -1)
+	updates, err := a.store.GetSiteUpdatesBySiteDefID(int64(defId), -1)
 	if err != nil {
 		log.Error(err)
 	}
@@ -178,37 +188,31 @@ func siteDefUpdatesHandler(resp http.ResponseWriter, req *http.Request) {
 	enc.Encode(updates)
 }
 
-func eventsHandler(resp http.ResponseWriter, req *http.Request) {
-	dao := models.GetDAO()
+func (a *Admin) eventsHandler(resp http.ResponseWriter, req *http.Request) {
 	limit, err := strconv.Atoi(req.FormValue("limit"))
 	if err != nil {
 		limit = 100
 	}
-	events, _ := dao.GetCrawlEvents(limit)
+	events, _ := a.store.GetCrawlEvents(limit)
 	enc := json.NewEncoder(resp)
 	enc.SetIndent("", "\t")
 	enc.Encode(events)
 }
 
-func ServeAdmin(host string, port int) {
-	listenAddress := fmt.Sprintf("%s:%d", host, port)
-	log.Info("Listening on", listenAddress)
-	log.Error(http.ListenAndServe(listenAddress, rtr))
-}
 
-func initRoutes() {
+func (a *Admin) initRoutes() {
 	rtr = mux.NewRouter()
-	rtr.HandleFunc("/", siteDefsHandler)
-	rtr.HandleFunc("/sitedef/{id:[0-9]+}", detailsHandler)
-	rtr.HandleFunc("/sitedef/{id:[0-9]+}/events", siteDefEventsHandler)
-	rtr.HandleFunc("/sitedef/{id:[0-9]+}/updates", siteDefUpdatesHandler)
-	rtr.HandleFunc("/sitedef/new", newSiteDefHandler)
-	rtr.HandleFunc("/sitedef/test", testHandler)
-	rtr.HandleFunc("/sitedef/crawl", forceCrawlHandler)
-	rtr.HandleFunc("/events", eventsHandler)
+	rtr.HandleFunc("/", a.siteDefsHandler)
+	rtr.HandleFunc("/sitedef/{id:[0-9]+}", a.detailsHandler)
+	rtr.HandleFunc("/sitedef/{id:[0-9]+}/events", a.siteDefEventsHandler)
+	rtr.HandleFunc("/sitedef/{id:[0-9]+}/updates", a.siteDefUpdatesHandler)
+	rtr.HandleFunc("/sitedef/new", a.newSiteDefHandler)
+	rtr.HandleFunc("/sitedef/test", a.testHandler)
+	rtr.HandleFunc("/sitedef/crawl", a.forceCrawlHandler)
+	rtr.HandleFunc("/events", a.eventsHandler)
 }
 
-func initTemplates() {
+func (a *Admin) initTemplates() {
 	fm := template.FuncMap{
 		"datetime": func(t time.Time) string {
 			return t.Format("2006-01-02T15:04:05")
@@ -218,9 +222,4 @@ func initTemplates() {
 	for _, an := range AssetNames() {
 		tpl.Parse(string(MustAsset(an)))
 	}
-}
-
-func init() {
-	initRoutes()
-	initTemplates()
 }
