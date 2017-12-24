@@ -86,7 +86,7 @@ func admin_detailsGohtml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "admin_details.gohtml", size: 8883, mode: os.FileMode(436), modTime: time.Unix(1500628224, 0)}
+	info := bindataFileInfo{name: "admin_details.gohtml", size: 8883, mode: os.FileMode(436), modTime: time.Unix(1509366814, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -106,7 +106,7 @@ func admin_footerGohtml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "admin_footer.gohtml", size: 53, mode: os.FileMode(436), modTime: time.Unix(1499954457, 0)}
+	info := bindataFileInfo{name: "admin_footer.gohtml", size: 53, mode: os.FileMode(436), modTime: time.Unix(1509366814, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -126,7 +126,7 @@ func admin_headerGohtml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "admin_header.gohtml", size: 1772, mode: os.FileMode(436), modTime: time.Unix(1499954457, 0)}
+	info := bindataFileInfo{name: "admin_header.gohtml", size: 1772, mode: os.FileMode(436), modTime: time.Unix(1509366814, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -146,7 +146,7 @@ func admin_indexGohtml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "admin_index.gohtml", size: 1118, mode: os.FileMode(436), modTime: time.Unix(1500537198, 0)}
+	info := bindataFileInfo{name: "admin_index.gohtml", size: 1118, mode: os.FileMode(436), modTime: time.Unix(1509366814, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

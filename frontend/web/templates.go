@@ -86,7 +86,7 @@ func frontend_footerGohtml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "frontend_footer.gohtml", size: 139, mode: os.FileMode(436), modTime: time.Unix(1500549217, 0)}
+	info := bindataFileInfo{name: "frontend_footer.gohtml", size: 139, mode: os.FileMode(436), modTime: time.Unix(1509366814, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -106,7 +106,7 @@ func frontend_headerGohtml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "frontend_header.gohtml", size: 642, mode: os.FileMode(436), modTime: time.Unix(1500550115, 0)}
+	info := bindataFileInfo{name: "frontend_header.gohtml", size: 642, mode: os.FileMode(436), modTime: time.Unix(1509366814, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -126,7 +126,7 @@ func frontend_indexGohtml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "frontend_index.gohtml", size: 460, mode: os.FileMode(436), modTime: time.Unix(1500630007, 0)}
+	info := bindataFileInfo{name: "frontend_index.gohtml", size: 460, mode: os.FileMode(436), modTime: time.Unix(1509366814, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -146,7 +146,7 @@ func styleCss() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "style.css", size: 1095, mode: os.FileMode(436), modTime: time.Unix(1500630103, 0)}
+	info := bindataFileInfo{name: "style.css", size: 1095, mode: os.FileMode(436), modTime: time.Unix(1509366814, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
