@@ -15,9 +15,6 @@ import (
 	"github.com/johnstcn/freshcomics/common/store"
 )
 
-var tpl *template.Template
-var rtr *mux.Router
-
 type Admin struct {
 	mux.Router
 	store store.Store
@@ -40,7 +37,7 @@ func (a *Admin) siteDefsHandler(resp http.ResponseWriter, req *http.Request) {
 		log.Error(err)
 	}
 	//tpl := getTemplate("admin_index.gohtml")
-	err = tpl.ExecuteTemplate(resp, "admin_index", &defs)
+	err = a.tpl.ExecuteTemplate(resp, "admin_index", &defs)
 	if err != nil {
 		log.Error("could not execute template:", err)
 	}
@@ -119,8 +116,7 @@ func (a *Admin) detailsHandler(resp http.ResponseWriter, req *http.Request) {
 			log.Error(err)
 		}
 	}
-	//tpl := getTemplate("admin_details.gohtml")
-	err = tpl.ExecuteTemplate(resp, "admin_details", r)
+	err = a.tpl.ExecuteTemplate(resp, "admin_details", r)
 	if err != nil {
 		log.Error("could not execute template:", err)
 	}
@@ -201,15 +197,14 @@ func (a *Admin) eventsHandler(resp http.ResponseWriter, req *http.Request) {
 
 
 func (a *Admin) initRoutes() {
-	rtr = mux.NewRouter()
-	rtr.HandleFunc("/", a.siteDefsHandler)
-	rtr.HandleFunc("/sitedef/{id:[0-9]+}", a.detailsHandler)
-	rtr.HandleFunc("/sitedef/{id:[0-9]+}/events", a.siteDefEventsHandler)
-	rtr.HandleFunc("/sitedef/{id:[0-9]+}/updates", a.siteDefUpdatesHandler)
-	rtr.HandleFunc("/sitedef/new", a.newSiteDefHandler)
-	rtr.HandleFunc("/sitedef/test", a.testHandler)
-	rtr.HandleFunc("/sitedef/crawl", a.forceCrawlHandler)
-	rtr.HandleFunc("/events", a.eventsHandler)
+	a.HandleFunc("/", a.siteDefsHandler)
+	a.HandleFunc("/sitedef/{id:[0-9]+}", a.detailsHandler)
+	a.HandleFunc("/sitedef/{id:[0-9]+}/events", a.siteDefEventsHandler)
+	a.HandleFunc("/sitedef/{id:[0-9]+}/updates", a.siteDefUpdatesHandler)
+	a.HandleFunc("/sitedef/new", a.newSiteDefHandler)
+	a.HandleFunc("/sitedef/test", a.testHandler)
+	a.HandleFunc("/sitedef/crawl", a.forceCrawlHandler)
+	a.HandleFunc("/events", a.eventsHandler)
 }
 
 func (a *Admin) initTemplates() {
@@ -218,8 +213,8 @@ func (a *Admin) initTemplates() {
 			return t.Format("2006-01-02T15:04:05")
 		},
 	}
-	tpl = template.New("").Funcs(fm)
+	a.tpl = template.New("").Funcs(fm)
 	for _, an := range AssetNames() {
-		tpl.Parse(string(MustAsset(an)))
+		a.tpl.Parse(string(MustAsset(an)))
 	}
 }
