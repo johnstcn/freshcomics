@@ -2,13 +2,13 @@ package store
 
 import (
 	"net"
+	"time"
 	"testing"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
-	"time"
 )
 
 type StoreTestSuite struct {
