@@ -8,9 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/azer/snakecase"
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
 	"github.com/johnstcn/freshcomics/internal/common/log"
@@ -65,7 +64,6 @@ func NewStore(dsn string) (Store, error) {
 		break
 	}
 	log.Info("Connected to database")
-	db.MapperFunc(snakecase.SnakeCase)
 
 	ip, err := NewIPInfoer(86400, 5)
 	if err != nil {
