@@ -15,19 +15,30 @@ type GeoLoc struct {
 }
 
 type IPInfoer interface {
-	GetIPInfo(addr net.IP) GeoLoc
+	GetIPInfo(addr net.IP) (GeoLoc, error)
 }
 
 type ipInfoer struct {
-	geoIP *freegeoip.DB
+	geoIP lookuper
 }
 
+type lookuper interface {
+	Lookup(addr net.IP, result interface{}) error
+}
+
+type urlOpener func(url string, refreshSecs, fetchTimeoutSecs time.Duration) (*freegeoip.DB, error)
+
 var _ IPInfoer = (*ipInfoer)(nil)
+var _ lookuper = (*freegeoip.DB)(nil)
 
 func NewIPInfoer(refreshSecs, fetchTimeoutSecs int) (IPInfoer, error) {
+	return newIPInfoer(freegeoip.OpenURL, refreshSecs, fetchTimeoutSecs)
+}
+
+func newIPInfoer(openURL urlOpener, refreshSecs, fetchTimeoutSecs int) (IPInfoer, error) {
 	geoIPRefresh := time.Duration(refreshSecs) * time.Second
 	geoIPFetchTimeout := time.Duration(fetchTimeoutSecs) * time.Second
-	ip, err := freegeoip.OpenURL(freegeoip.MaxMindDB, geoIPRefresh, geoIPFetchTimeout)
+	ip, err := openURL(freegeoip.MaxMindDB, geoIPRefresh, geoIPFetchTimeout)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Could not open MaxMind geoIP db")
 	}
@@ -37,10 +48,13 @@ func NewIPInfoer(refreshSecs, fetchTimeoutSecs int) (IPInfoer, error) {
 	}, nil
 }
 
-func (i *ipInfoer) GetIPInfo(addr net.IP) GeoLoc {
+func (i *ipInfoer) GetIPInfo(addr net.IP) (GeoLoc, error) {
 	var ipInfo freegeoip.DefaultQuery
 	var g GeoLoc
-	i.geoIP.Lookup(addr, &ipInfo)
+	err := i.geoIP.Lookup(addr, &ipInfo)
+	if err != nil {
+		return GeoLoc{}, err
+	}
 	g.Country = ipInfo.Country.ISOCode
 	if len(ipInfo.Region) > 0 {
 		g.Region = ipInfo.Region[0].ISOCode
@@ -48,5 +62,5 @@ func (i *ipInfoer) GetIPInfo(addr net.IP) GeoLoc {
 	if len(ipInfo.City.Names) > 0 {
 		g.City = ipInfo.City.Names["en"]
 	}
-	return g
+	return g, nil
 }

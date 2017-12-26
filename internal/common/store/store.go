@@ -114,7 +114,10 @@ func (s *store) RecordClick(updateID string, addr net.IP) error {
 	if err != nil {
 		log.Error(err)
 	}
-	ipinfo := s.geoIP.GetIPInfo(addr)
+	ipinfo, err := s.geoIP.GetIPInfo(addr)
+	if err != nil {
+		log.Error("unable to lookup IP %s: %v", addr, err)
+	}
 	_, err = tx.Exec(stmt, uid, ipinfo.Country, ipinfo.Region, ipinfo.City)
 	if err != nil {
 		return err
