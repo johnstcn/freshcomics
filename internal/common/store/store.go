@@ -16,7 +16,7 @@ import (
 )
 
 type Store interface {
-	GetComics() (*[]Comic, error)
+	GetComics() ([]Comic, error)
 	GetRedirectURL(suID string) (string, error)
 	RecordClick(updateID string, addr net.IP) error
 	CreateSiteDef() (*SiteDef, error)
@@ -73,7 +73,7 @@ func NewStore(dsn string) (Store, error) {
 	return &store{db: db, geoIP: ip}, nil
 }
 
-func (s *store) GetComics() (*[]Comic, error) {
+func (s *store) GetComics() ([]Comic, error) {
 	comics := make([]Comic, 0)
 	// TODO optimize this beast
 	stmt := `SELECT site_defs.name, site_defs.nsfw, site_updates.id, site_updates.title, site_updates.seen_at
@@ -88,7 +88,7 @@ WHERE site_updates.id IN (
 		fmt.Println("error fetching latest comic list:", err)
 		return nil, err
 	}
-	return &comics, nil
+	return comics, nil
 }
 
 func (s *store) GetRedirectURL(updateID string) (string, error) {
