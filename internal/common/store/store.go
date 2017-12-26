@@ -104,17 +104,17 @@ func (s *store) GetRedirectURL(updateID string) (string, error) {
 func (s *store) RecordClick(updateID string, addr net.IP) error {
 	uid, err := strconv.Atoi(updateID)
 	if err != nil {
-		log.Error("invalid updateID:", err)
+		return err
 	}
 	stmt := `INSERT INTO comic_clicks (update_id, country, region, city) VALUES ($1, $2, $3, $4);`
 
-	tx, err := s.db.Beginx()
-	if err != nil {
-		log.Error(err)
-	}
 	ipinfo, err := s.geoIP.GetIPInfo(addr)
 	if err != nil {
-		log.Error("unable to lookup IP %s: %v", addr, err)
+		return err
+	}
+	tx, err := s.db.Beginx()
+	if err != nil {
+		return err
 	}
 	_, err = tx.Exec(stmt, uid, ipinfo.Country, ipinfo.Region, ipinfo.City)
 	if err != nil {
