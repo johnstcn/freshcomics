@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/johnstcn/freshcomics/crawler/config"
-	"github.com/johnstcn/freshcomics/crawler/util"
-	"github.com/johnstcn/freshcomics/crawler/web"
-	"github.com/johnstcn/freshcomics/common/log"
-	"github.com/johnstcn/freshcomics/common/store"
+	"github.com/johnstcn/freshcomics/internal/crawler/config"
+	"github.com/johnstcn/freshcomics/internal/crawler/util"
+	"github.com/johnstcn/freshcomics/internal/crawler/web"
+	"github.com/johnstcn/freshcomics/internal/common/log"
+	"github.com/johnstcn/freshcomics/internal/common/store"
 )
 
 

@@ -10,9 +10,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/johnstcn/freshcomics/common/log"
-	"github.com/johnstcn/freshcomics/crawler/util"
-	"github.com/johnstcn/freshcomics/common/store"
+	"github.com/johnstcn/freshcomics/internal/common/log"
+	"github.com/johnstcn/freshcomics/internal/crawler/util"
+	"github.com/johnstcn/freshcomics/internal/common/store"
 )
 
 type Admin struct {

@@ -16,9 +16,9 @@ import (
 	"github.com/tdewolff/minify/html"
 	"github.com/tdewolff/minify/css"
 
-	"github.com/johnstcn/freshcomics/common/log"
-	"github.com/johnstcn/freshcomics/common/store"
-	"github.com/johnstcn/freshcomics/frontend/config"
+	"github.com/johnstcn/freshcomics/internal/common/log"
+	"github.com/johnstcn/freshcomics/internal/common/store"
+	"github.com/johnstcn/freshcomics/internal/frontend/config"
 )
 
 type frontend struct {

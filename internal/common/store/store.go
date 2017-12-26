@@ -13,7 +13,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
-	"github.com/johnstcn/freshcomics/common/log"
+	"github.com/johnstcn/freshcomics/internal/common/log"
 )
 
 type Store interface {

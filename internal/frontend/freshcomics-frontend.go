@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/johnstcn/freshcomics/common/log"
-	"github.com/johnstcn/freshcomics/frontend/web"
-	"github.com/johnstcn/freshcomics/frontend/config"
-	"github.com/johnstcn/freshcomics/common/store"
+	"github.com/johnstcn/freshcomics/internal/common/log"
+	"github.com/johnstcn/freshcomics/internal/frontend/web"
+	"github.com/johnstcn/freshcomics/internal/frontend/config"
+	"github.com/johnstcn/freshcomics/internal/common/store"
 )
 
 func main() {

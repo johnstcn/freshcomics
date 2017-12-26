@@ -6,7 +6,7 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 
-	"github.com/johnstcn/freshcomics/common/config"
+	"github.com/johnstcn/freshcomics/internal/common/config"
 )
 
 type CrawlerConfig struct {
