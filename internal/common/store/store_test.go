@@ -14,6 +14,19 @@ import (
 	"database/sql/driver"
 )
 
+var testSiteDef = SiteDef{
+	Name: "Test Name",
+	Active: true,
+	NSFW: true,
+	StartURL: "Test Start URL",
+	LastCheckedAt: time.Unix(0, 0),
+	URLTemplate: "Test Template",
+	RefXpath: "Test Ref XPath",
+	RefRegexp: "Test Ref Regexp",
+	TitleXpath: "Test Title XPath",
+	TitleRegexp: "Test Title Regexp",
+}
+
 type StoreTestSuite struct {
 	suite.Suite
 	store *store
@@ -145,23 +158,11 @@ func (s *StoreTestSuite) TestRecordClick_ErrCommitTx() {
 }
 
 func (s *StoreTestSuite) TestCreateSiteDef_OK() {
-	sd := SiteDef{
-		Name: "Test Name",
-		Active: true,
-		NSFW: true,
-		StartURL: "Test Start URL",
-		LastCheckedAt: s.now(),
-		URLTemplate: "Test Template",
-		RefXpath: "Test Ref XPath",
-		RefRegexp: "Test Ref Regexp",
-		TitleXpath: "Test Title XPath",
-		TitleRegexp: "Test Title Regexp",
-	}
 	rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateSiteDef)).WithArgs(sd.Name, sd.Active, sd.NSFW, sd.StartURL, sd.LastCheckedAt, sd.URLTemplate, sd.RefXpath, sd.RefRegexp, sd.TitleXpath, sd.TitleRegexp).WillReturnRows(rows)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateSiteDef)).WithArgs(testSiteDef.Name, testSiteDef.Active, testSiteDef.NSFW, testSiteDef.StartURL, testSiteDef.LastCheckedAt, testSiteDef.URLTemplate, testSiteDef.RefXpath, testSiteDef.RefRegexp, testSiteDef.TitleXpath, testSiteDef.TitleRegexp).WillReturnRows(rows)
 	s.mdb.ExpectCommit()
-	newid, err := s.store.CreateSiteDef(sd)
+	newid, err := s.store.CreateSiteDef(testSiteDef)
 	s.NotZero(newid)
 	s.NoError(err)
 }
