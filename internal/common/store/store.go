@@ -40,20 +40,20 @@ const (
 type Store interface {
 	GetComics() ([]Comic, error)
 	GetRedirectURL(suID string) (string, error)
-	RecordClick(updateID string, addr net.IP) error
-	CreateSiteDef() (*SiteDef, error)
-	GetAllSiteDefs(includeInactive bool) (*[]SiteDef, error)
-	SaveSiteDef(sd *SiteDef) error
-	GetSiteDefByID(id int64) (*SiteDef, error)
-	GetSiteDefLastChecked() (*SiteDef, error)
-	SetSiteDefLastChecked(sd *SiteDef, when time.Time) error
-	CreateSiteUpdate(su *SiteUpdate) error
-	GetSiteUpdatesBySiteDefID(sdid int64, limit int) (*[]SiteUpdate, error)
-	GetSiteUpdateBySiteDefAndRef(sd *SiteDef, ref string) (*SiteUpdate, error)
-	CreateCrawlEvent(sd *SiteDef, eventType, eventInfo interface{}) error
-	GetStartURLForCrawl(sd *SiteDef) (string, error)
-	GetCrawlEventsBySiteDefID(sdid int64, limit int) (*[]CrawlEvent, error)
-	GetCrawlEvents(limit int) (*[]CrawlEvent, error)
+	RecordClick(updateID int, addr net.IP) error
+	CreateSiteDef(SiteDef) (int, error)
+	GetAllSiteDefs(includeInactive bool) ([]SiteDef, error)
+	SaveSiteDef(sd SiteDef) error
+	GetSiteDefByID(id int64) (SiteDef, error)
+	GetSiteDefLastChecked() (SiteDef, error)
+	SetSiteDefLastChecked(sd SiteDef, when time.Time) error
+	CreateSiteUpdate(su SiteUpdate) error
+	GetSiteUpdatesBySiteDefID(sdid int64) ([]SiteUpdate, error)
+	GetSiteUpdateBySiteDefAndRef(sdid int64, ref string) (SiteUpdate, error)
+	CreateCrawlEvent(sd SiteDef, eventType, eventInfo interface{}) error
+	GetStartURLForCrawl(sd SiteDef) (string, error)
+	GetCrawlEventsBySiteDefID(sdid int64, limit int) ([]CrawlEvent, error)
+	GetCrawlEvents(limit int) ([]CrawlEvent, error)
 }
 
 type Conn interface {
@@ -113,16 +113,12 @@ func (s *store) GetRedirectURL(updateID string) (string, error) {
 	return result, nil
 }
 
-func (s *store) RecordClick(updateID string, addr net.IP) error {
-	uid, err := strconv.Atoi(updateID)
+func (s *store) RecordClick(updateID int, addr net.IP) error {
+	geoLoc, err := s.geoIP.GetIPInfo(addr)
 	if err != nil {
 		return err
 	}
 
-	ipinfo, err := s.geoIP.GetIPInfo(addr)
-	if err != nil {
-		return err
-	}
 	tx, err := s.db.Beginx()
 	if err != nil {
 		return err
@@ -212,9 +208,8 @@ func (s *store) SaveSiteDef(sd SiteDef) error {
 	return nil
 }
 
-// SetSiteDefLastCheckedNow sets the last_checked of a SiteDef to the given time.
-func (s *store) SetSiteDefLastChecked(sd *SiteDef, when time.Time) error {
-	stmt := `UPDATE site_defs SET last_checked_at = $1 WHERE id = $2;`
+// SetSiteDefLastChecked sets the last_checked of a SiteDef to the given time.
+func (s *store) SetSiteDefLastChecked(sd SiteDef, when time.Time) error {
 	tx, err := s.db.Beginx()
 	if err != nil {
 		return err
@@ -231,9 +226,7 @@ func (s *store) SetSiteDefLastChecked(sd *SiteDef, when time.Time) error {
 }
 
 // CreateSiteUpdate persists a new SiteUpdate.
-func (s *store) CreateSiteUpdate(su *SiteUpdate) error {
-	stmt := `INSERT INTO site_updates (site_def_id, ref, url, title, seen_at)
-	VALUES ($1, $2, $3, $4, $5);`
+func (s *store) CreateSiteUpdate(su SiteUpdate) error {
 	tx, err := s.db.Beginx()
 	if err != nil {
 		return err
@@ -250,29 +243,29 @@ func (s *store) CreateSiteUpdate(su *SiteUpdate) error {
 }
 
 // GetSiteUpdatesBySiteDefID returns all SiteUpdates related to the SiteDef.
-func (s *store) GetSiteUpdatesBySiteDefID(sdid int64, limit int) (*[]SiteUpdate, error) {
+func (s *store) GetSiteUpdatesBySiteDefID(sdid int64) ([]SiteUpdate, error) {
 	var err error
 	updates := make([]SiteUpdate, 0)
 	err = s.db.Select(&updates, sqlGetSiteUpdatesBySiteDefID, sdid)
 	if err != nil {
 		return nil, err
 	}
-	return &updates, nil
+	return updates, nil
 }
 
 // GetSiteUpdateBySiteDefAndRef returns a SiteUpdate with the given ref related to the given SiteDef.
-func (s *store) GetSiteUpdateBySiteDefAndRef(sd *SiteDef, ref string) (*SiteUpdate, error) {
+func (s *store) GetSiteUpdateBySiteDefAndRef(sdid int64, ref string) (SiteUpdate, error) {
 	update := SiteUpdate{}
 	err := s.db.Get(&update, sqlGetSiteUpdateBySiteDefAndRef, sdid, ref)
 	if err != nil {
-		return nil, err
+		return SiteUpdate{}, err
 	}
-	return &update, nil
+	return update, nil
 }
 
 // GetStartURLForCrawl returns the URL of the latest SiteUpdate if present,
 // and nil otherwise (no SiteUpdates for SiteDef).
-func (s *store) GetStartURLForCrawl(sd *SiteDef) (string, error) {
+func (s *store) GetStartURLForCrawl(sd SiteDef) (string, error) {
 	var nextUrl string
 	err := s.db.Get(&nextUrl, sqlGetStartURLForCrawl, sd.ID)
 
