@@ -19,20 +19,20 @@ const (
 	sqlCreateSiteDef = `INSERT INTO site_defs (name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;`
 	sqlGetRedirectURL = `SELECT site_updates.url FROM site_updates WHERE id = $1`
 	sqlRecordClick = `INSERT INTO comic_clicks (update_id, country, region, city) VALUES ($1, $2, $3, $4);`
-	sqlGetAllSiteDefs = `SELECT * FROM site_defs ORDER BY name ASC;`
-	sqlGetAllSiteDefsActive = `SELECT * FROM site_defs WHERE active = TRUE ORDER BY NAME ASC;`
-	sqlGetSiteDefByID = `SELECT * FROM site_defs WHERE id = $1;`
-	sqlGetSiteDefLastChecked = `SELECT * FROM site_defs ORDER BY last_checked_at ASC LIMIT 1;`
+	sqlGetAllSiteDefs = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs ORDER BY name ASC;`
+	sqlGetAllSiteDefsActive = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE active = TRUE ORDER BY NAME ASC;`
+	sqlGetSiteDefByID = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE id = $1;`
+	sqlGetSiteDefLastChecked = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp  FROM site_defs ORDER BY last_checked_at ASC LIMIT 1;`
 	sqlSaveSiteDef = `UPDATE site_defs SET (name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id = $11;`
 	sqlSetSiteDefLastChecked = `UPDATE site_defs SET last_checked_at = $1 WHERE id = $2;`
 	sqlCreateSiteUpdate = `INSERT INTO site_updates (site_def_id, ref, url, title, seen_at) VALUES ($1, $2, $3, $4, $5);`
-	sqlGetSiteUpdatesBySiteDefID = `SELECT * FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
-	sqlGetSiteUpdateBySiteDefAndRef = `SELECT * FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
-	sqlGetStartURLForCrawl = `SELECT URL FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
-	sqlGetCrawlEvents = `SELECT * FROM crawl_events ORDER BY created_at DESC;`
-	sqlGetCrawlEventsLimit = `SELECT * FROM crawl_events ORDER BY created_at DESC LIMIT $1;`
-	sqlGetCrawlEventsBySiteDefID = `SELECT * FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC;`
-	sqlGetCrawlEventsBySiteDefIdLimit = `SELECT * FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC LIMIT $1;`
+	sqlGetSiteUpdatesBySiteDefID = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
+	sqlGetSiteUpdateBySiteDefAndRef = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
+	sqlGetStartURLForCrawl = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
+	sqlGetCrawlEvents = `SELECT id, site_def_id, created_at, event_type, event_info FROM crawl_events ORDER BY created_at DESC;`
+	sqlGetCrawlEventsLimit = `SELECT id, site_def_id, created_at, event_type, event_info FROM crawl_events ORDER BY created_at DESC LIMIT $1;`
+	sqlGetCrawlEventsBySiteDefID = `SELECT id, site_def_id, created_at, event_type, event_info FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC;`
+	sqlGetCrawlEventsBySiteDefIdLimit = `SELECT id, site_def_id, created_at, event_type, event_info FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC LIMIT $1;`
 	sqlCreateCrawlEvent = `INSERT INTO crawl_events (site_def_id, event_type, event_info) VALUES ($1, $2, $3);`
 
 )
