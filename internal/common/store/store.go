@@ -59,7 +59,6 @@ type Store interface {
 type Conn interface {
 	Beginx() (*sqlx.Tx, error)
 	Get(dest interface{}, query string, args ...interface{}) error
-	MapperFunc(mf func(string) string)
 	Select(dest interface{}, query string, args ...interface{}) error
 }
 
