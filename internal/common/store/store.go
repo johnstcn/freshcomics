@@ -157,14 +157,13 @@ func (s *store) CreateSiteDef(sd SiteDef) (int, error) {
 
 // GetAllSiteDefs returns all SiteDefs.
 func (s *store) GetAllSiteDefs(includeInactive bool) ([]SiteDef, error) {
-	var stmt string
-	if includeInactive {
-		stmt = sqlGetAllSiteDefs
-	} else {
-		stmt = sqlGetAllSiteDefsActive
-	}
+	var err error
 	defs := make([]SiteDef, 0)
-	err := s.db.Select(&defs, stmt)
+	if includeInactive {
+		err = s.db.Select(&defs, sqlGetAllSiteDefs)
+	} else {
+		err = s.db.Select(&defs, sqlGetAllSiteDefsActive)
+	}
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
