@@ -15,6 +15,7 @@ import (
 )
 
 var testSiteDef = SiteDef{
+	ID: 1,
 	Name: "Test Name",
 	Active: true,
 	NSFW: true,
@@ -26,6 +27,8 @@ var testSiteDef = SiteDef{
 	TitleXpath: "Test Title XPath",
 	TitleRegexp: "Test Title Regexp",
 }
+
+var testError = fmt.Errorf("some error")
 
 type StoreTestSuite struct {
 	suite.Suite
@@ -76,7 +79,7 @@ func (s *StoreTestSuite) TestGetComics_OK() {
 }
 
 func (s *StoreTestSuite) TestGetComics_Err() {
-	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetComics)).WillReturnError(fmt.Errorf("some error"))
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetComics)).WillReturnError(testError)
 	comics, err := s.store.GetComics()
 	s.Nil(comics)
 	s.EqualError(err, "some error")
@@ -91,7 +94,7 @@ func (s *StoreTestSuite) TestGetRedirectURL_OK() {
 }
 
 func (s *StoreTestSuite) TestGetRedirectURL_Err() {
-	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetRedirectURL)).WithArgs("12345").WillReturnError(fmt.Errorf("some error"))
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetRedirectURL)).WithArgs("12345").WillReturnError(testError)
 	url, err := s.store.GetRedirectURL("12345")
 	s.Zero(url)
 	s.EqualError(err, "some error")
@@ -113,9 +116,9 @@ func (s *StoreTestSuite) TestRecordClick_OK() {
 
 func (s *StoreTestSuite) TestRecordClick_InvalidIP() {
 	ip := net.ParseIP("169.254.169.254")
-	s.mip.On("GetIPInfo", ip).Return(GeoLoc{}, fmt.Errorf("invalid IP")).Once()
+	s.mip.On("GetIPInfo", ip).Return(GeoLoc{}, testError).Once()
 	err := s.store.RecordClick(12345, ip)
-	s.EqualError(err, "invalid IP")
+	s.EqualError(err, "some error")
 }
 
 func (s *StoreTestSuite) TestRecordClick_ErrBeginTx() {
@@ -125,7 +128,7 @@ func (s *StoreTestSuite) TestRecordClick_ErrBeginTx() {
 		Region: "L",
 		City: "Dublin",
 	}, nil).Once()
-	s.mdb.ExpectBegin().WillReturnError(fmt.Errorf("some error"))
+	s.mdb.ExpectBegin().WillReturnError(testError)
 	err := s.store.RecordClick(12345, ip)
 	s.EqualError(err, "some error")
 }
@@ -138,7 +141,7 @@ func (s *StoreTestSuite) TestRecordClick_ErrExec() {
 		City: "Dublin",
 	}, nil).Once()
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectExec(regexp.QuoteMeta(sqlRecordClick)).WithArgs(12345, "IE", "L", "Dublin").WillReturnError(fmt.Errorf("some error"))
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlRecordClick)).WithArgs(12345, "IE", "L", "Dublin").WillReturnError(testError)
 	err := s.store.RecordClick(12345, ip)
 	s.EqualError(err, "some error")
 }
@@ -152,7 +155,7 @@ func (s *StoreTestSuite) TestRecordClick_ErrCommitTx() {
 	}, nil).Once()
 	s.mdb.ExpectBegin()
 	s.mdb.ExpectExec(regexp.QuoteMeta(sqlRecordClick)).WithArgs(12345, "IE", "L", "Dublin").WillReturnResult(driver.ResultNoRows)
-	s.mdb.ExpectCommit().WillReturnError(fmt.Errorf("some error"))
+	s.mdb.ExpectCommit().WillReturnError(testError)
 	err := s.store.RecordClick(12345, ip)
 	s.EqualError(err, "some error")
 }
@@ -165,6 +168,31 @@ func (s *StoreTestSuite) TestCreateSiteDef_OK() {
 	newid, err := s.store.CreateSiteDef(testSiteDef)
 	s.NotZero(newid)
 	s.NoError(err)
+}
+
+func (s *StoreTestSuite) TestCreateSiteDef_ErrBegin() {
+	s.mdb.ExpectBegin().WillReturnError(testError)
+	newid, err := s.store.CreateSiteDef(testSiteDef)
+	s.EqualValues(-1, newid)
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestCreateSiteDef_ErrQuery() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateSiteDef)).WithArgs(testSiteDef.Name, testSiteDef.Active, testSiteDef.NSFW, testSiteDef.StartURL, testSiteDef.LastCheckedAt, testSiteDef.URLTemplate, testSiteDef.RefXpath, testSiteDef.RefRegexp, testSiteDef.TitleXpath, testSiteDef.TitleRegexp).WillReturnError(testError)
+	newid, err := s.store.CreateSiteDef(testSiteDef)
+	s.EqualValues(-1, newid)
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestCreateSiteDef_ErrCommit() {
+	rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateSiteDef)).WithArgs(testSiteDef.Name, testSiteDef.Active, testSiteDef.NSFW, testSiteDef.StartURL, testSiteDef.LastCheckedAt, testSiteDef.URLTemplate, testSiteDef.RefXpath, testSiteDef.RefRegexp, testSiteDef.TitleXpath, testSiteDef.TitleRegexp).WillReturnRows(rows)
+	s.mdb.ExpectCommit().WillReturnError(testError)
+	newid, err := s.store.CreateSiteDef(testSiteDef)
+	s.EqualValues(-1, newid)
+	s.EqualError(err, "some error")
 }
 
 func TestStoreTestSuite(t *testing.T) {
