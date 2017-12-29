@@ -51,6 +51,15 @@ var testSiteUpdateA = SiteUpdate{
 	SeenAt: time.Unix(0, 0),
 }
 
+var testCrawlInfoA = CrawlInfo{
+	ID:        1,
+	SiteDefID: 1,
+	StartedAt: time.Unix(0, 0),
+	EndedAt:   time.Unix(1, 0),
+	Seen:      1,
+	Status:    CrawlStatusOK,
+}
+
 var testError = fmt.Errorf("some error")
 
 type StoreTestSuite struct {
@@ -428,6 +437,69 @@ func (s *StoreTestSuite) TestGetStartURLForCrawl_ErrQuery() {
 	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetStartURLForCrawl)).WillReturnError(testError)
 	url, err := s.store.GetStartURLForCrawl(testSiteDefA)
 	s.Zero(url)
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestGetCrawlInfo_OK() {
+	rows := sqlmock.NewRows([]string{"id", "site_def_id", "started_at", "ended_at", "status", "seen"})
+	rows.AddRow(testCrawlInfoA.ID, testCrawlInfoA.SiteDefID, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Status, testCrawlInfoA.Seen)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetCrawlInfo)).WillReturnRows(rows)
+	ci, err := s.store.GetCrawlInfo()
+	s.NoError(err)
+	s.Len(ci, 1)
+	s.EqualValues(ci[0], testCrawlInfoA)
+}
+
+func (s *StoreTestSuite) TestGetCrawlInfo_ErrQuery() {
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetCrawlInfo)).WillReturnError(testError)
+	ci, err := s.store.GetCrawlInfo()
+	s.Len(ci, 0)
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestGetCrawlInfoBySiteDefID_OK() {
+	rows := sqlmock.NewRows([]string{"id", "site_def_id", "started_at", "ended_at", "status", "seen"})
+	rows.AddRow(testCrawlInfoA.ID, testCrawlInfoA.SiteDefID, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Status, testCrawlInfoA.Seen)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetCrawlInfoBySiteDefID)).WillReturnRows(rows)
+	ci, err := s.store.GetCrawlInfoBySiteDefID(1)
+	s.NoError(err)
+	s.Len(ci, 1)
+	s.EqualValues(ci[0], testCrawlInfoA)
+}
+
+func (s *StoreTestSuite) TestGetCrawlInfoBySiteDefID_ErrQuery() {
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetCrawlInfoBySiteDefID)).WillReturnError(testError)
+	ci, err := s.store.GetCrawlInfoBySiteDefID(1)
+	s.Len(ci, 0)
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestCreateCrawlInfo_OK() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testCrawlInfoA.SiteDefID, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Status, testCrawlInfoA.Seen).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectCommit()
+	err := s.store.CreateCrawlInfo(testCrawlInfoA)
+	s.NoError(err)
+}
+
+func (s *StoreTestSuite) TestCreateCrawlInfo_ErrBegin() {
+	s.mdb.ExpectBegin().WillReturnError(testError)
+	err := s.store.CreateCrawlInfo(testCrawlInfoA)
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestCreateCrawlInfo_ErrExec() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testCrawlInfoA.SiteDefID, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Status, testCrawlInfoA.Seen).WillReturnError(testError)
+	err := s.store.CreateCrawlInfo(testCrawlInfoA)
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestCreateCrawlInfo_ErrCommit() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testCrawlInfoA.SiteDefID, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Status, testCrawlInfoA.Seen).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectCommit().WillReturnError(testError)
+	err := s.store.CreateCrawlInfo(testCrawlInfoA)
 	s.EqualError(err, "some error")
 }
 

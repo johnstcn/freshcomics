@@ -14,6 +14,8 @@ import (
 )
 
 const (
+	CrawlStatusOK = "OK"
+
 	sqlGetComics = `SELECT site_defs.name, site_defs.nsfw, site_updates.id, site_updates.title, site_updates.seen_at FROM site_updates JOIN site_defs ON (site_updates.site_def_id = site_defs.id) WHERE site_updates.id IN (SELECT DISTINCT ON (site_def_id) id FROM site_updates ORDER BY site_def_id, seen_at DESC) ORDER BY seen_at desc;`
 	sqlCreateSiteDef = `INSERT INTO site_defs (name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;`
 	sqlGetRedirectURL = `SELECT site_updates.url FROM site_updates WHERE id = $1`

@@ -2,8 +2,6 @@ package store
 
 import (
 	"time"
-
-	"github.com/jmoiron/sqlx/types"
 )
 
 type Comic struct {
