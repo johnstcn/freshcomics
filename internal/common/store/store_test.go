@@ -14,7 +14,7 @@ import (
 	"database/sql/driver"
 )
 
-var testSiteDef = SiteDef{
+var testSiteDefA = SiteDef{
 	ID: 1,
 	Name: "Test Name",
 	Active: true,
@@ -26,6 +26,20 @@ var testSiteDef = SiteDef{
 	RefRegexp: "Test Ref Regexp",
 	TitleXpath: "Test Title XPath",
 	TitleRegexp: "Test Title Regexp",
+}
+
+var testSiteDefB = SiteDef{
+	ID: 1,
+	Name: "Test Name Other",
+	Active: false,
+	NSFW: false,
+	StartURL: "Test Start URL Other",
+	LastCheckedAt: time.Unix(0, 0),
+	URLTemplate: "Test Template Other",
+	RefXpath: "Test Ref XPath Other",
+	RefRegexp: "Test Ref Regexp Other",
+	TitleXpath: "Test Title XPath Other",
+	TitleRegexp: "Test Title Regexp Other",
 }
 
 var testError = fmt.Errorf("some error")
