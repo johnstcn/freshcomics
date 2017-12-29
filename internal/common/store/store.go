@@ -2,7 +2,6 @@ package store
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"net"
 	"time"
@@ -25,15 +24,13 @@ const (
 	sqlGetSiteDefLastChecked = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp  FROM site_defs ORDER BY last_checked_at ASC LIMIT 1;`
 	sqlSaveSiteDef = `UPDATE site_defs SET (name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id = $11;`
 	sqlSetSiteDefLastChecked = `UPDATE site_defs SET last_checked_at = $1 WHERE id = $2;`
-	sqlCreateSiteUpdate = `INSERT INTO site_updates (site_def_id, ref, url, title, seen_at) VALUES ($1, $2, $3, $4, $5);`
-	sqlGetSiteUpdatesBySiteDefID = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
-	sqlGetSiteUpdateBySiteDefAndRef = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
-	sqlGetStartURLForCrawl = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
-	sqlGetCrawlEvents = `SELECT id, site_def_id, created_at, event_type, event_info FROM crawl_events ORDER BY created_at DESC;`
-	sqlGetCrawlEventsLimit = `SELECT id, site_def_id, created_at, event_type, event_info FROM crawl_events ORDER BY created_at DESC LIMIT $1;`
-	sqlGetCrawlEventsBySiteDefID = `SELECT id, site_def_id, created_at, event_type, event_info FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC;`
-	sqlGetCrawlEventsBySiteDefIdLimit = `SELECT id, site_def_id, created_at, event_type, event_info FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC LIMIT $1;`
-	sqlCreateCrawlEvent = `INSERT INTO crawl_events (site_def_id, event_type, event_info) VALUES ($1, $2, $3);`
+	sqlCreateSiteUpdate               = `INSERT INTO site_updates (site_def_id, ref, url, title, seen_at) VALUES ($1, $2, $3, $4, $5);`
+	sqlGetSiteUpdatesBySiteDefID      = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
+	sqlGetSiteUpdateBySiteDefAndRef   = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
+	sqlGetStartURLForCrawl            = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
+	sqlGetCrawlInfo                   = `SELECT id, site_def_id, started_at, ended_at, status, seen FROM crawl_events ORDER BY created_at DESC;`
+	sqlGetCrawlInfoBySiteDefID        = `SELECT id, site_def_id, started_at, ended_at, status, seen FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC;`
+	sqlCreateCrawlInfo                = `INSERT INTO crawl_events (site_def_id, started_at, ended_at, status, seen) VALUES ($1, $2, $3, $4, $5);`
 
 )
 
@@ -50,10 +47,10 @@ type Store interface {
 	CreateSiteUpdate(su SiteUpdate) error
 	GetSiteUpdatesBySiteDefID(sdid int64) ([]SiteUpdate, error)
 	GetSiteUpdateBySiteDefAndRef(sdid int64, ref string) (SiteUpdate, error)
-	CreateCrawlEvent(sd SiteDef, eventType, eventInfo interface{}) error
 	GetStartURLForCrawl(sd SiteDef) (string, error)
-	GetCrawlEventsBySiteDefID(sdid int64, limit int) ([]CrawlInfo, error)
-	GetCrawlEvents(limit int) ([]CrawlInfo, error)
+	GetCrawlInfoBySiteDefID(sdid int64) ([]CrawlInfo, error)
+	GetCrawlInfo() ([]CrawlInfo, error)
+	CreateCrawlInfo(ci CrawlInfo) error
 }
 
 type Conn interface {
@@ -276,44 +273,30 @@ func (s *store) GetStartURLForCrawl(sd SiteDef) (string, error) {
 	return nextUrl, nil
 }
 
-func (s *store) GetCrawlEvents(limit int) ([]CrawlInfo, error) {
-	var err error
+func (s *store) GetCrawlInfo() ([]CrawlInfo, error) {
 	events := make([]CrawlInfo, 0)
-	if limit < 0 {
-		err = s.db.Select(&events, sqlGetCrawlEvents)
-	} else {
-		err = s.db.Select(&events, sqlGetCrawlEventsLimit, limit)
-	}
+	err := s.db.Select(&events, sqlGetCrawlInfo)
 	if err != nil {
 		return nil, err
 	}
 	return events, nil
 }
 
-func (s *store) GetCrawlEventsBySiteDefID(sdid int64, limit int) ([]CrawlInfo, error) {
-	var err error
+func (s *store) GetCrawlInfoBySiteDefID(sdid int64) ([]CrawlInfo, error) {
 	events := make([]CrawlInfo, 0)
-	if limit < 0 {
-		err = s.db.Select(&events, sqlGetCrawlEventsBySiteDefID, sdid)
-	} else {
-		err = s.db.Select(&events, sqlGetCrawlEventsBySiteDefIdLimit, sdid, limit)
-	}
+	err := s.db.Select(&events, sqlGetCrawlInfoBySiteDefID, sdid)
 	if err != nil {
 		return nil, err
 	}
 	return events, nil
 }
 
-func (s *store) CreateCrawlEvent(sd SiteDef, eventType, eventInfo interface{}) error {
-	info, err := json.Marshal(eventInfo)
-	if err != nil {
-		return errors.New("eventInfo should be in format k1=v1&k2=v2")
-	}
+func (s *store) CreateCrawlInfo(ci CrawlInfo) error {
 	tx, err := s.db.Beginx()
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(sqlCreateCrawlEvent, sd.ID, eventType, info)
+	_, err = tx.Exec(sqlCreateCrawlInfo, ci.SiteDefID, ci.StartedAt, ci.EndedAt, ci.Status, ci.Seen)
 	if err != nil {
 		return err
 	}
