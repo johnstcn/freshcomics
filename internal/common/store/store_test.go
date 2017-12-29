@@ -177,24 +177,24 @@ func (s *StoreTestSuite) TestRecordClick_ErrCommitTx() {
 func (s *StoreTestSuite) TestCreateSiteDef_OK() {
 	rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateSiteDef)).WithArgs(testSiteDef.Name, testSiteDef.Active, testSiteDef.NSFW, testSiteDef.StartURL, testSiteDef.LastCheckedAt, testSiteDef.URLTemplate, testSiteDef.RefXpath, testSiteDef.RefRegexp, testSiteDef.TitleXpath, testSiteDef.TitleRegexp).WillReturnRows(rows)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateSiteDef)).WithArgs(testSiteDefA.Name, testSiteDefA.Active, testSiteDefA.NSFW, testSiteDefA.StartURL, testSiteDefA.LastCheckedAt, testSiteDefA.URLTemplate, testSiteDefA.RefXpath, testSiteDefA.RefRegexp, testSiteDefA.TitleXpath, testSiteDefA.TitleRegexp).WillReturnRows(rows)
 	s.mdb.ExpectCommit()
-	newid, err := s.store.CreateSiteDef(testSiteDef)
+	newid, err := s.store.CreateSiteDef(testSiteDefA)
 	s.NotZero(newid)
 	s.NoError(err)
 }
 
 func (s *StoreTestSuite) TestCreateSiteDef_ErrBegin() {
 	s.mdb.ExpectBegin().WillReturnError(testError)
-	newid, err := s.store.CreateSiteDef(testSiteDef)
+	newid, err := s.store.CreateSiteDef(testSiteDefA)
 	s.EqualValues(-1, newid)
 	s.EqualError(err, "some error")
 }
 
 func (s *StoreTestSuite) TestCreateSiteDef_ErrQuery() {
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateSiteDef)).WithArgs(testSiteDef.Name, testSiteDef.Active, testSiteDef.NSFW, testSiteDef.StartURL, testSiteDef.LastCheckedAt, testSiteDef.URLTemplate, testSiteDef.RefXpath, testSiteDef.RefRegexp, testSiteDef.TitleXpath, testSiteDef.TitleRegexp).WillReturnError(testError)
-	newid, err := s.store.CreateSiteDef(testSiteDef)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateSiteDef)).WithArgs(testSiteDefA.Name, testSiteDefA.Active, testSiteDefA.NSFW, testSiteDefA.StartURL, testSiteDefA.LastCheckedAt, testSiteDefA.URLTemplate, testSiteDefA.RefXpath, testSiteDefA.RefRegexp, testSiteDefA.TitleXpath, testSiteDefA.TitleRegexp).WillReturnError(testError)
+	newid, err := s.store.CreateSiteDef(testSiteDefA)
 	s.EqualValues(-1, newid)
 	s.EqualError(err, "some error")
 }
@@ -202,11 +202,48 @@ func (s *StoreTestSuite) TestCreateSiteDef_ErrQuery() {
 func (s *StoreTestSuite) TestCreateSiteDef_ErrCommit() {
 	rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateSiteDef)).WithArgs(testSiteDef.Name, testSiteDef.Active, testSiteDef.NSFW, testSiteDef.StartURL, testSiteDef.LastCheckedAt, testSiteDef.URLTemplate, testSiteDef.RefXpath, testSiteDef.RefRegexp, testSiteDef.TitleXpath, testSiteDef.TitleRegexp).WillReturnRows(rows)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateSiteDef)).WithArgs(testSiteDefA.Name, testSiteDefA.Active, testSiteDefA.NSFW, testSiteDefA.StartURL, testSiteDefA.LastCheckedAt, testSiteDefA.URLTemplate, testSiteDefA.RefXpath, testSiteDefA.RefRegexp, testSiteDefA.TitleXpath, testSiteDefA.TitleRegexp).WillReturnRows(rows)
 	s.mdb.ExpectCommit().WillReturnError(testError)
-	newid, err := s.store.CreateSiteDef(testSiteDef)
+	newid, err := s.store.CreateSiteDef(testSiteDefA)
 	s.EqualValues(-1, newid)
 	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestGetAllSiteDefs_OK() {
+	rows := sqlmock.NewRows([]string{"id", "name", "active", "nsfw", "start_url", "last_checked_at", "url_template", "ref_xpath", "ref_regexp", "title_xpath", "title_regexp"})
+	rows.AddRow(testSiteDefA.ID, testSiteDefA.Name, testSiteDefA.Active, testSiteDefA.NSFW, testSiteDefA.StartURL, testSiteDefA.LastCheckedAt, testSiteDefA.URLTemplate, testSiteDefA.RefXpath, testSiteDefA.RefRegexp, testSiteDefA.TitleXpath, testSiteDefA.TitleRegexp)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetAllSiteDefsActive)).WillReturnRows(rows)
+	defs, err := s.store.GetAllSiteDefs(false)
+	s.NoError(err)
+	s.Len(defs, 1)
+	s.EqualValues(testSiteDefA, defs[0])
+}
+
+func (s *StoreTestSuite) TestGetAllSiteDefsInActive_OK() {
+	rows := sqlmock.NewRows([]string{"id", "name", "active", "nsfw", "start_url", "last_checked_at", "url_template", "ref_xpath", "ref_regexp", "title_xpath", "title_regexp"})
+	rows.AddRow(testSiteDefA.ID, testSiteDefA.Name, testSiteDefA.Active, testSiteDefA.NSFW, testSiteDefA.StartURL, testSiteDefA.LastCheckedAt, testSiteDefA.URLTemplate, testSiteDefA.RefXpath, testSiteDefA.RefRegexp, testSiteDefA.TitleXpath, testSiteDefA.TitleRegexp)
+	rows.AddRow(testSiteDefB.ID, testSiteDefB.Name, testSiteDefB.Active, testSiteDefB.NSFW, testSiteDefB.StartURL, testSiteDefB.LastCheckedAt, testSiteDefB.URLTemplate, testSiteDefB.RefXpath, testSiteDefB.RefRegexp, testSiteDefB.TitleXpath, testSiteDefB.TitleRegexp)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetAllSiteDefs)).WillReturnRows(rows)
+	defs, err := s.store.GetAllSiteDefs(true)
+	s.NoError(err)
+	s.Len(defs, 2)
+	s.EqualValues(testSiteDefA, defs[0])
+	s.EqualValues(testSiteDefB, defs[1])
+}
+
+func (s *StoreTestSuite) TestGetAllSiteDefsNoRows_OK() {
+	rows := sqlmock.NewRows([]string{"id", "name", "active", "nsfw", "start_url", "last_checked_at", "url_template", "ref_xpath", "ref_regexp", "title_xpath", "title_regexp"})
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetAllSiteDefs)).WillReturnRows(rows)
+	defs, err := s.store.GetAllSiteDefs(true)
+	s.NoError(err)
+	s.Len(defs, 0)
+}
+
+func (s *StoreTestSuite) TestGetAllSiteDefs_Err() {
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetAllSiteDefs)).WillReturnError(testError)
+	defs, err := s.store.GetAllSiteDefs(true)
+	s.EqualError(err, "some error")
+	s.Nil(defs)
 }
 
 func TestStoreTestSuite(t *testing.T) {
