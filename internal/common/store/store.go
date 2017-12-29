@@ -26,8 +26,8 @@ const (
 	sqlSaveSiteDef = `UPDATE site_defs SET (name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id = $11;`
 	sqlSetSiteDefLastChecked = `UPDATE site_defs SET last_checked_at = $1 WHERE id = $2;`
 	sqlCreateSiteUpdate = `INSERT INTO site_updates (site_def_id, ref, url, title, seen_at) VALUES ($1, $2, $3, $4, $5);`
-	sqlGetSiteUpdatesBySiteDefID = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
-	sqlGetSiteUpdateBySiteDefAndRef = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
+	sqlGetSiteUpdatesBySiteDefID = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
+	sqlGetSiteUpdateBySiteDefAndRef = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
 	sqlGetStartURLForCrawl = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
 	sqlGetCrawlEvents = `SELECT id, site_def_id, created_at, event_type, event_info FROM crawl_events ORDER BY created_at DESC;`
 	sqlGetCrawlEventsLimit = `SELECT id, site_def_id, created_at, event_type, event_info FROM crawl_events ORDER BY created_at DESC LIMIT $1;`
