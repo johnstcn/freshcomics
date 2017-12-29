@@ -20,7 +20,7 @@ var testSiteDefA = SiteDef{
 	Active: true,
 	NSFW: true,
 	StartURL: "Test Start URL",
-	LastCheckedAt: time.Unix(0, 0),
+	LastCheckedAt: time.Unix(1, 0),
 	URLTemplate: "Test Template",
 	RefXpath: "Test Ref XPath",
 	RefRegexp: "Test Ref Regexp",
@@ -73,7 +73,7 @@ func (s *StoreTestSuite) SetupSuite() {
 		geoIP: s.mip,
 	}
 	s.now = func() time.Time {
-		return time.Unix(0, 0)
+		return time.Unix(1234, 0)
 	}
 }
 
