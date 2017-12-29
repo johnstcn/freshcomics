@@ -52,8 +52,8 @@ type Store interface {
 	GetSiteUpdateBySiteDefAndRef(sdid int64, ref string) (SiteUpdate, error)
 	CreateCrawlEvent(sd SiteDef, eventType, eventInfo interface{}) error
 	GetStartURLForCrawl(sd SiteDef) (string, error)
-	GetCrawlEventsBySiteDefID(sdid int64, limit int) ([]CrawlEvent, error)
-	GetCrawlEvents(limit int) ([]CrawlEvent, error)
+	GetCrawlEventsBySiteDefID(sdid int64, limit int) ([]CrawlInfo, error)
+	GetCrawlEvents(limit int) ([]CrawlInfo, error)
 }
 
 type Conn interface {
@@ -276,9 +276,9 @@ func (s *store) GetStartURLForCrawl(sd SiteDef) (string, error) {
 	return nextUrl, nil
 }
 
-func (s *store) GetCrawlEvents(limit int) ([]CrawlEvent, error) {
+func (s *store) GetCrawlEvents(limit int) ([]CrawlInfo, error) {
 	var err error
-	events := make([]CrawlEvent, 0)
+	events := make([]CrawlInfo, 0)
 	if limit < 0 {
 		err = s.db.Select(&events, sqlGetCrawlEvents)
 	} else {
@@ -290,9 +290,9 @@ func (s *store) GetCrawlEvents(limit int) ([]CrawlEvent, error) {
 	return events, nil
 }
 
-func (s *store) GetCrawlEventsBySiteDefID(sdid int64, limit int) ([]CrawlEvent, error) {
+func (s *store) GetCrawlEventsBySiteDefID(sdid int64, limit int) ([]CrawlInfo, error) {
 	var err error
-	events := make([]CrawlEvent, 0)
+	events := make([]CrawlInfo, 0)
 	if limit < 0 {
 		err = s.db.Select(&events, sqlGetCrawlEventsBySiteDefID, sdid)
 	} else {

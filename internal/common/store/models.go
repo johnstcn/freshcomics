@@ -46,10 +46,11 @@ type SiteUpdate struct {
 	SeenAt    time.Time		`db:"seen_at"`
 }
 
-type CrawlEvent struct {
-	ID        int64				`db:"id"`
-	SiteDefID int64				`db:"site_def_id"`
-	CreatedAt time.Time			`db:"created_at"`
-	EventType string			`db:"event_type"`
-	EventInfo types.JSONText	`db:"event_info"`
+type CrawlInfo struct {
+	ID        int64          `db:"id"`
+	SiteDefID int64          `db:"site_def_id"`
+	StartedAt time.Time      `db:"started_at"`
+	EndedAt   time.Time      `db:"ended_at"`
+	Status    string         `db:"status"`
+	Seen      int            `db:"seen"`
 }

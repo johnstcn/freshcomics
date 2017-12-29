@@ -12,8 +12,6 @@ CREATE TABLE IF NOT EXISTS site_defs (
 	title_regexp 	text 		NOT NULL DEFAULT '(.+)'
 );
 
--- CREATE INDEX IF NOT EXISTS site_defs_last_checked_at_idx ON site_defs (last_checked_at);
-
 CREATE TABLE IF NOT EXISTS site_updates (
 	id 				serial		PRIMARY KEY,
 	site_def_id 	integer 	REFERENCES site_defs (id) ON DELETE CASCADE,
@@ -23,28 +21,11 @@ CREATE TABLE IF NOT EXISTS site_updates (
 	seen_at			timestamptz	NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- CREATE INDEX IF NOT EXISTS site_updates_ref_idx ON site_updates (ref);
--- CREATE INDEX IF NOT EXISTS site_updates_seen_at_idx ON site_updates(seen_at);
-
-CREATE TABLE IF NOT EXISTS crawl_events (
-	id				serial		PRIMARY KEY,
-	site_def_id		integer		REFERENCES site_defs (id) ON DELETE CASCADE,
-	created_at		timestamptz	NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	event_type		text		NOT NULL,
-	event_info		JSONB		NOT NULL
+CREATE TABLE IF NOT EXISTS crawl_info (
+	id				    serial		  PRIMARY KEY,
+	site_def_id		integer		  REFERENCES site_defs (id) ON DELETE CASCADE,
+	started_at		timestamptz	NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	ended_at      timestamptz,
+	status        text        NOT NULL,
+	seen          integer     NOT NULL DEFAULT 0
 );
-
--- CREATE INDEX IF NOT EXISTS crawl_events_created_at_idx ON crawl_events(created_at);
--- CREATE INDEX IF NOT EXISTS crawl_events_event_type_idx ON crawl_events(event_type);
-
--- CREATE TABLE IF NOT EXISTS comic_clicks (
---	id			serial		PRIMARY KEY,
---	update_id	integer		REFERENCES site_updates (id) ON DELETE CASCADE,
---	clicked_at  timestamptz	NOT NULL DEFAULT CURRENT_TIMESTAMP,
---	country		text		NOT NULL,
---	region		text		NOT NULL,
---	city		text		NOT NULL
---);
-
--- CREATE INDEX IF NOT EXISTS comic_clicks_country_idx ON comic_clicks (country);
--- CREATE INDEX IF NOT EXISTS comic_clicks_region_idx ON comic_clicks (region);
