@@ -246,6 +246,96 @@ func (s *StoreTestSuite) TestGetAllSiteDefs_Err() {
 	s.Nil(defs)
 }
 
+func (s *StoreTestSuite) TestGetSiteDefByID_OK() {
+	rows := sqlmock.NewRows([]string{"id", "name", "active", "nsfw", "start_url", "last_checked_at", "url_template", "ref_xpath", "ref_regexp", "title_xpath", "title_regexp"})
+	rows.AddRow(testSiteDefA.ID, testSiteDefA.Name, testSiteDefA.Active, testSiteDefA.NSFW, testSiteDefA.StartURL, testSiteDefA.LastCheckedAt, testSiteDefA.URLTemplate, testSiteDefA.RefXpath, testSiteDefA.RefRegexp, testSiteDefA.TitleXpath, testSiteDefA.TitleRegexp)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetSiteDefByID)).WithArgs(1).WillReturnRows(rows)
+	def, err := s.store.GetSiteDefByID(1)
+	s.NoError(err)
+	s.EqualValues(testSiteDefA, def)
+}
+
+func (s *StoreTestSuite) TestGetSiteDefByID_Err() {
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetSiteDefByID)).WillReturnError(testError)
+	def, err := s.store.GetSiteDefByID(1)
+	s.EqualError(err, "some error")
+	s.Zero(def)
+}
+
+func (s *StoreTestSuite) TestGetSiteDefLastChecked_OK() {
+	rows := sqlmock.NewRows([]string{"id", "name", "active", "nsfw", "start_url", "last_checked_at", "url_template", "ref_xpath", "ref_regexp", "title_xpath", "title_regexp"})
+	rows.AddRow(testSiteDefA.ID, testSiteDefA.Name, testSiteDefA.Active, testSiteDefA.NSFW, testSiteDefA.StartURL, testSiteDefA.LastCheckedAt, testSiteDefA.URLTemplate, testSiteDefA.RefXpath, testSiteDefA.RefRegexp, testSiteDefA.TitleXpath, testSiteDefA.TitleRegexp)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetSiteDefLastChecked)).WillReturnRows(rows)
+	def, err := s.store.GetSiteDefLastChecked()
+	s.NoError(err)
+	s.EqualValues(testSiteDefA, def)
+}
+
+func (s *StoreTestSuite) TestGetSiteDefLastChecked_Err() {
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetSiteDefLastChecked)).WillReturnError(testError)
+	def, err := s.store.GetSiteDefLastChecked()
+	s.EqualError(err, "some error")
+	s.Zero(def)
+}
+
+func (s *StoreTestSuite) TestSaveSiteDef_OK() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlSaveSiteDef)).WithArgs(testSiteDefA.Name, testSiteDefA.Active, testSiteDefA.NSFW, testSiteDefA.StartURL, testSiteDefA.LastCheckedAt, testSiteDefA.URLTemplate, testSiteDefA.RefXpath, testSiteDefA.RefRegexp, testSiteDefA.TitleXpath, testSiteDefA.TitleRegexp, testSiteDefA.ID).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectCommit()
+	err := s.store.SaveSiteDef(testSiteDefA)
+	s.NoError(err)
+}
+
+func (s *StoreTestSuite) TestSaveSiteDef_ErrBegin() {
+	s.mdb.ExpectBegin().WillReturnError(testError)
+	err := s.store.SaveSiteDef(testSiteDefA)
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestSaveSiteDef_ErrExec() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlSaveSiteDef)).WithArgs(testSiteDefA.Name, testSiteDefA.Active, testSiteDefA.NSFW, testSiteDefA.StartURL, testSiteDefA.LastCheckedAt, testSiteDefA.URLTemplate, testSiteDefA.RefXpath, testSiteDefA.RefRegexp, testSiteDefA.TitleXpath, testSiteDefA.TitleRegexp, testSiteDefA.ID).WillReturnError(testError)
+	err := s.store.SaveSiteDef(testSiteDefA)
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestSaveSiteDef_ErrCommit() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlSaveSiteDef)).WithArgs(testSiteDefA.Name, testSiteDefA.Active, testSiteDefA.NSFW, testSiteDefA.StartURL, testSiteDefA.LastCheckedAt, testSiteDefA.URLTemplate, testSiteDefA.RefXpath, testSiteDefA.RefRegexp, testSiteDefA.TitleXpath, testSiteDefA.TitleRegexp, testSiteDefA.ID).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectCommit().WillReturnError(testError)
+	err := s.store.SaveSiteDef(testSiteDefA)
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestSetSiteDefLastChecked_OK() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlSetSiteDefLastChecked)).WithArgs(s.now(), 1).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectCommit()
+	err := s.store.SetSiteDefLastChecked(testSiteDefA, s.now())
+	s.NoError(err)
+}
+
+func (s *StoreTestSuite) TestSetSiteDefLastChecked_ErrBegin() {
+	s.mdb.ExpectBegin().WillReturnError(testError)
+	err := s.store.SetSiteDefLastChecked(testSiteDefA, s.now())
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestSetSiteDefLastChecked_ErrExec() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlSetSiteDefLastChecked)).WithArgs(s.now(), 1).WillReturnError(testError)
+	err := s.store.SetSiteDefLastChecked(testSiteDefA, s.now())
+	s.EqualError(err, "some error")
+}
+
+func (s *StoreTestSuite) TestSetSiteDefLastChecked_ErrCommit() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlSetSiteDefLastChecked)).WithArgs(s.now(), 1).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectCommit().WillReturnError(testError)
+	err := s.store.SetSiteDefLastChecked(testSiteDefA, s.now())
+	s.EqualError(err, "some error")
+}
+
 func TestStoreTestSuite(t *testing.T) {
 	suite.Run(t, new(StoreTestSuite))
 }
