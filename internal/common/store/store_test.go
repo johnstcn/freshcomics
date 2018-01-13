@@ -7,48 +7,49 @@ import (
 	"testing"
 	"time"
 
+	"database/sql/driver"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
-	"database/sql/driver"
 )
 
 var testSiteDefA = SiteDef{
-	ID: 1,
-	Name: "Test Name",
-	Active: true,
-	NSFW: true,
-	StartURL: "Test Start URL",
+	ID:            1,
+	Name:          "Test Name",
+	Active:        true,
+	NSFW:          true,
+	StartURL:      "Test Start URL",
 	LastCheckedAt: time.Unix(1, 0),
-	URLTemplate: "Test Template",
-	RefXpath: "Test Ref XPath",
-	RefRegexp: "Test Ref Regexp",
-	TitleXpath: "Test Title XPath",
-	TitleRegexp: "Test Title Regexp",
+	URLTemplate:   "Test Template",
+	RefXpath:      "Test Ref XPath",
+	RefRegexp:     "Test Ref Regexp",
+	TitleXpath:    "Test Title XPath",
+	TitleRegexp:   "Test Title Regexp",
 }
 
 var testSiteDefB = SiteDef{
-	ID: 1,
-	Name: "Test Name Other",
-	Active: false,
-	NSFW: false,
-	StartURL: "Test Start URL Other",
+	ID:            1,
+	Name:          "Test Name Other",
+	Active:        false,
+	NSFW:          false,
+	StartURL:      "Test Start URL Other",
 	LastCheckedAt: time.Unix(0, 0),
-	URLTemplate: "Test Template Other",
-	RefXpath: "Test Ref XPath Other",
-	RefRegexp: "Test Ref Regexp Other",
-	TitleXpath: "Test Title XPath Other",
-	TitleRegexp: "Test Title Regexp Other",
+	URLTemplate:   "Test Template Other",
+	RefXpath:      "Test Ref XPath Other",
+	RefRegexp:     "Test Ref Regexp Other",
+	TitleXpath:    "Test Title XPath Other",
+	TitleRegexp:   "Test Title Regexp Other",
 }
 
 var testSiteUpdateA = SiteUpdate{
-	ID: 1,
+	ID:        1,
 	SiteDefID: 1,
-	Ref: "Test Ref",
-	URL: "Test URL",
-	Title: "Test Title",
-	SeenAt: time.Unix(0, 0),
+	Ref:       "Test Ref",
+	URL:       "Test URL",
+	Title:     "Test Title",
+	SeenAt:    time.Unix(0, 0),
 }
 
 var testCrawlInfoA = CrawlInfo{
@@ -136,8 +137,8 @@ func (s *StoreTestSuite) TestRecordClick_OK() {
 	ip := net.ParseIP("169.254.169.254")
 	s.mip.On("GetIPInfo", ip).Return(GeoLoc{
 		Country: "IE",
-		Region: "L",
-		City: "Dublin",
+		Region:  "L",
+		City:    "Dublin",
 	}, nil).Once()
 	s.mdb.ExpectBegin()
 	s.mdb.ExpectExec(regexp.QuoteMeta(sqlRecordClick)).WithArgs(12345, "IE", "L", "Dublin").WillReturnResult(driver.ResultNoRows)
@@ -157,8 +158,8 @@ func (s *StoreTestSuite) TestRecordClick_ErrBeginTx() {
 	ip := net.ParseIP("169.254.169.254")
 	s.mip.On("GetIPInfo", ip).Return(GeoLoc{
 		Country: "IE",
-		Region: "L",
-		City: "Dublin",
+		Region:  "L",
+		City:    "Dublin",
 	}, nil).Once()
 	s.mdb.ExpectBegin().WillReturnError(testError)
 	err := s.store.RecordClick(12345, ip)
@@ -169,8 +170,8 @@ func (s *StoreTestSuite) TestRecordClick_ErrExec() {
 	ip := net.ParseIP("169.254.169.254")
 	s.mip.On("GetIPInfo", ip).Return(GeoLoc{
 		Country: "IE",
-		Region: "L",
-		City: "Dublin",
+		Region:  "L",
+		City:    "Dublin",
 	}, nil).Once()
 	s.mdb.ExpectBegin()
 	s.mdb.ExpectExec(regexp.QuoteMeta(sqlRecordClick)).WithArgs(12345, "IE", "L", "Dublin").WillReturnError(testError)
@@ -182,8 +183,8 @@ func (s *StoreTestSuite) TestRecordClick_ErrCommitTx() {
 	ip := net.ParseIP("169.254.169.254")
 	s.mip.On("GetIPInfo", ip).Return(GeoLoc{
 		Country: "IE",
-		Region: "L",
-		City: "Dublin",
+		Region:  "L",
+		City:    "Dublin",
 	}, nil).Once()
 	s.mdb.ExpectBegin()
 	s.mdb.ExpectExec(regexp.QuoteMeta(sqlRecordClick)).WithArgs(12345, "IE", "L", "Dublin").WillReturnResult(driver.ResultNoRows)
