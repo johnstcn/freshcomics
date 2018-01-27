@@ -10,7 +10,7 @@ import (
 	"github.com/johnstcn/freshcomics/internal/common/log"
 	"github.com/johnstcn/freshcomics/internal/frontend/web"
 	"github.com/johnstcn/freshcomics/internal/frontend/config"
-	"github.com/johnstcn/freshcomics/internal/common/store"
+	"github.com/johnstcn/freshcomics/internal/store"
 )
 
 func main() {

@@ -17,7 +17,7 @@ import (
 	"github.com/tdewolff/minify/css"
 
 	"github.com/johnstcn/freshcomics/internal/common/log"
-	"github.com/johnstcn/freshcomics/internal/common/store"
+	"github.com/johnstcn/freshcomics/internal/store"
 	"github.com/johnstcn/freshcomics/internal/frontend/config"
 )
 

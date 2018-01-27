@@ -11,7 +11,7 @@ import (
 	"github.com/johnstcn/freshcomics/internal/crawler/util"
 	"github.com/johnstcn/freshcomics/internal/crawler/web"
 	"github.com/johnstcn/freshcomics/internal/common/log"
-	"github.com/johnstcn/freshcomics/internal/common/store"
+	"github.com/johnstcn/freshcomics/internal/store"
 )
 
 

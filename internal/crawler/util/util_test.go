@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/xmlpath.v2"
 
-	"github.com/johnstcn/freshcomics/internal/common/store"
+	"github.com/johnstcn/freshcomics/internal/store"
 )
 
 func TestApplyRegex(t *testing.T) {

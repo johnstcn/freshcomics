@@ -15,7 +15,7 @@ import (
 	"gopkg.in/xmlpath.v2"
 
 	"github.com/johnstcn/freshcomics/internal/common/log"
-	"github.com/johnstcn/freshcomics/internal/common/store"
+	"github.com/johnstcn/freshcomics/internal/store"
 	"github.com/johnstcn/freshcomics/internal/crawler/config"
 )
 
