@@ -1,4 +1,4 @@
-package store
+package ipinfo
 
 import (
 	"net"
@@ -7,6 +7,8 @@ import (
 	"github.com/fiorix/freegeoip"
 	"github.com/pkg/errors"
 )
+
+//go:generate mockery -interface IPInfoer -package ipinfotest
 
 type GeoLoc struct {
 	Country string
@@ -19,17 +21,17 @@ type IPInfoer interface {
 }
 
 type ipInfoer struct {
-	geoIP lookuper
+	geoIP Lookuper
 }
 
-type lookuper interface {
+type Lookuper interface {
 	Lookup(addr net.IP, result interface{}) error
 }
 
 type urlOpener func(url string, refreshSecs, fetchTimeoutSecs time.Duration) (*freegeoip.DB, error)
 
 var _ IPInfoer = (*ipInfoer)(nil)
-var _ lookuper = (*freegeoip.DB)(nil)
+var _ Lookuper = (*freegeoip.DB)(nil)
 
 func NewIPInfoer(refreshSecs, fetchTimeoutSecs int) (IPInfoer, error) {
 	return newIPInfoer(freegeoip.OpenURL, refreshSecs, fetchTimeoutSecs)
