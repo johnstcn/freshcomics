@@ -34,7 +34,7 @@ const (
 	sqlGetStartURLForCrawl          = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
 	sqlGetCrawlInfo                 = `SELECT id, site_def_id, started_at, ended_at, status, seen FROM crawl_events ORDER BY created_at DESC;`
 	sqlGetCrawlInfoBySiteDefID      = `SELECT id, site_def_id, started_at, ended_at, status, seen FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC;`
-	sqlCreateCrawlInfo              = `INSERT INTO crawl_events (site_def_id, started_at, ended_at, status, seen) VALUES ($1, $2, $3, $4, $5);`
+	sqlCreateCrawlInfo              = `INSERT INTO crawl_info (site_def_id, started_at, ended_at, status, seen) VALUES ($1, $2, $3, $4, $5);`
 )
 
 type pgStore struct {
