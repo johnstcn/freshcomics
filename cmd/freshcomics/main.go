@@ -1,4 +1,4 @@
-package main
+package freshcomics
 
 //go:generate go-bindata -prefix "web/templates/" -pkg web -o web/templates.go web/templates/
 

@@ -1,4 +1,6 @@
-TODO implement RSS feed scraping
+TODO move admin web UI into frontend
+TODO extract parsing-related stuf from crawler.util
 TODO implement frontend MVP
 TODO implement user logins
 TODO implement user reading state
+TODO implement RSS feed scraping
