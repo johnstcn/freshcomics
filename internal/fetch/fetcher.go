@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+//go:generate mockery -interface PageFetcher -package fetchtest
+
 // Doer is an interface satisfied by http.Client
 type Doer interface {
 	Do(*http.Request) (*http.Response, error)
