@@ -64,7 +64,7 @@ func (mockerySelf *Store) CreateSiteUpdate(su store.SiteUpdate) error {
 	return r0
 }
 
-// GetAllSiteDefs provides a mock function with given fields: includeInactive
+// GetSiteDefs provides a mock function with given fields: includeInactive
 func (mockerySelf *Store) GetAllSiteDefs(includeInactive bool) ([]store.SiteDef, error) {
 	ret := mockerySelf.Called(includeInactive)
 
@@ -133,8 +133,8 @@ func (mockerySelf *Store) GetCrawlInfo() ([]store.CrawlInfo, error) {
 	return r0, r1
 }
 
-// GetCrawlInfoBySiteDefID provides a mock function with given fields: sdid
-func (mockerySelf *Store) GetCrawlInfoBySiteDefID(sdid int64) ([]store.CrawlInfo, error) {
+// GetCrawlInfo provides a mock function with given fields: sdid
+func (mockerySelf *Store) GetCrawlInfo(sdid int64) ([]store.CrawlInfo, error) {
 	ret := mockerySelf.Called(sdid)
 
 	var r0 []store.CrawlInfo
@@ -156,7 +156,7 @@ func (mockerySelf *Store) GetCrawlInfoBySiteDefID(sdid int64) ([]store.CrawlInfo
 	return r0, r1
 }
 
-// GetRedirectURL provides a mock function with given fields: suID
+// Redirect provides a mock function with given fields: suID
 func (mockerySelf *Store) GetRedirectURL(suID string) (string, error) {
 	ret := mockerySelf.Called(suID)
 
@@ -177,7 +177,7 @@ func (mockerySelf *Store) GetRedirectURL(suID string) (string, error) {
 	return r0, r1
 }
 
-// GetSiteDefByID provides a mock function with given fields: id
+// GetSiteDef provides a mock function with given fields: id
 func (mockerySelf *Store) GetSiteDefByID(id int64) (store.SiteDef, error) {
 	ret := mockerySelf.Called(id)
 
@@ -198,7 +198,7 @@ func (mockerySelf *Store) GetSiteDefByID(id int64) (store.SiteDef, error) {
 	return r0, r1
 }
 
-// GetSiteDefLastChecked provides a mock function with given fields:
+// GetLastChecked provides a mock function with given fields:
 func (mockerySelf *Store) GetSiteDefLastChecked() (store.SiteDef, error) {
 	ret := mockerySelf.Called()
 
@@ -219,8 +219,8 @@ func (mockerySelf *Store) GetSiteDefLastChecked() (store.SiteDef, error) {
 	return r0, r1
 }
 
-// GetSiteUpdateBySiteDefAndRef provides a mock function with given fields: sdid, ref
-func (mockerySelf *Store) GetSiteUpdateBySiteDefAndRef(sdid int64, ref string) (store.SiteUpdate, error) {
+// GetSiteUpdate provides a mock function with given fields: sdid, ref
+func (mockerySelf *Store) GetSiteUpdate(sdid int64, ref string) (store.SiteUpdate, error) {
 	ret := mockerySelf.Called(sdid, ref)
 
 	var r0 store.SiteUpdate
@@ -240,8 +240,8 @@ func (mockerySelf *Store) GetSiteUpdateBySiteDefAndRef(sdid int64, ref string) (
 	return r0, r1
 }
 
-// GetSiteUpdatesBySiteDefID provides a mock function with given fields: sdid
-func (mockerySelf *Store) GetSiteUpdatesBySiteDefID(sdid int64) ([]store.SiteUpdate, error) {
+// GetSiteUpdates provides a mock function with given fields: sdid
+func (mockerySelf *Store) GetSiteUpdates(sdid int64) ([]store.SiteUpdate, error) {
 	ret := mockerySelf.Called(sdid)
 
 	var r0 []store.SiteUpdate
@@ -284,7 +284,7 @@ func (mockerySelf *Store) GetStartURLForCrawl(sd store.SiteDef) (string, error) 
 	return r0, r1
 }
 
-// RecordClick provides a mock function with given fields: updateID, addr
+// CreateClickLog provides a mock function with given fields: updateID, addr
 func (mockerySelf *Store) RecordClick(updateID int, addr net.IP) error {
 	ret := mockerySelf.Called(updateID, addr)
 
@@ -298,7 +298,7 @@ func (mockerySelf *Store) RecordClick(updateID int, addr net.IP) error {
 	return r0
 }
 
-// SaveSiteDef provides a mock function with given fields: sd
+// UpdateSiteDef provides a mock function with given fields: sd
 func (mockerySelf *Store) SaveSiteDef(sd store.SiteDef) error {
 	ret := mockerySelf.Called(sd)
 
@@ -312,7 +312,7 @@ func (mockerySelf *Store) SaveSiteDef(sd store.SiteDef) error {
 	return r0
 }
 
-// SetSiteDefLastChecked provides a mock function with given fields: sd, when
+// SetLastChecked provides a mock function with given fields: sd, when
 func (mockerySelf *Store) SetSiteDefLastChecked(sd store.SiteDef, when time.Time) error {
 	ret := mockerySelf.Called(sd, when)
 

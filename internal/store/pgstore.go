@@ -16,25 +16,23 @@ import (
 )
 
 const (
-	CrawlStatusOK = "OK"
-
-	sqlGetComics                    = `SELECT site_defs.name, site_defs.nsfw, site_updates.id, site_updates.title, site_updates.seen_at FROM site_updates JOIN site_defs ON (site_updates.site_def_id = site_defs.id) WHERE site_updates.id IN (SELECT DISTINCT ON (site_def_id) id FROM site_updates ORDER BY site_def_id, seen_at DESC) ORDER BY seen_at desc;`
-	sqlCreateSiteDef                = `INSERT INTO site_defs (name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;`
-	sqlGetRedirectURL               = `SELECT site_updates.url FROM site_updates WHERE id = $1`
-	sqlRecordClick                  = `INSERT INTO comic_clicks (update_id, country, region, city) VALUES ($1, $2, $3, $4);`
-	sqlGetAllSiteDefs               = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs ORDER BY name ASC;`
-	sqlGetAllSiteDefsActive         = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE active = TRUE ORDER BY NAME ASC;`
-	sqlGetSiteDefByID               = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE id = $1;`
-	sqlGetSiteDefLastChecked        = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp  FROM site_defs ORDER BY last_checked_at ASC LIMIT 1;`
-	sqlSaveSiteDef                  = `UPDATE site_defs SET (name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id = $11;`
-	sqlSetSiteDefLastChecked        = `UPDATE site_defs SET last_checked_at = $1 WHERE id = $2;`
-	sqlCreateSiteUpdate             = `INSERT INTO site_updates (site_def_id, ref, url, title, seen_at) VALUES ($1, $2, $3, $4, $5);`
-	sqlGetSiteUpdatesBySiteDefID    = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
-	sqlGetSiteUpdateBySiteDefAndRef = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
-	sqlGetStartURLForCrawl          = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
-	sqlGetCrawlInfo                 = `SELECT id, site_def_id, started_at, ended_at, status, seen FROM crawl_events ORDER BY created_at DESC;`
-	sqlGetCrawlInfoBySiteDefID      = `SELECT id, site_def_id, started_at, ended_at, status, seen FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC;`
-	sqlCreateCrawlInfo              = `INSERT INTO crawl_info (site_def_id, started_at, ended_at, status, seen) VALUES ($1, $2, $3, $4, $5);`
+	sqlGetComics             string = `SELECT site_defs.name, site_defs.nsfw, site_updates.id, site_updates.title, site_updates.seen_at FROM site_updates JOIN site_defs ON (site_updates.site_def_id = site_defs.id) WHERE site_updates.id IN (SELECT DISTINCT ON (site_def_id) id FROM site_updates ORDER BY site_def_id, seen_at DESC) ORDER BY seen_at desc;`
+	sqlCreateSiteDef         string = `INSERT INTO site_defs (name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;`
+	sqlRedirect              string = `SELECT site_updates.url FROM site_updates WHERE id = $1`
+	sqlSaveClick             string = `INSERT INTO "comic_clicks" (update_id, country, region, city) VALUES ($1, $2, $3, $4);`
+	sqlGetSiteDefs           string = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs ORDER BY name ASC;`
+	sqlGetActiveSiteDefs     string = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE active = TRUE ORDER BY NAME ASC;`
+	sqlGetSiteDef            string = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE id = $1;`
+	sqlGetSiteDefLastChecked string = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp  FROM site_defs ORDER BY last_checked_at ASC LIMIT 1;`
+	sqlUpdateSiteDef         string = `UPDATE site_defs SET (name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id = $11;`
+	sqlSetLastChecked        string = `UPDATE site_defs SET last_checked_at = $1 WHERE id = $2;`
+	sqlCreateSiteUpdate      string = `INSERT INTO site_updates (site_def_id, ref, url, title, seen_at) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
+	sqlGetSiteUpdates        string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
+	sqlGetSiteUpdate         string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
+	sqlGetLastURL            string = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
+	sqlGetCrawlInfos         string = `SELECT id, site_def_id, started_at, ended_at, error, seen FROM crawl_events ORDER BY created_at DESC;`
+	sqlGetCrawlInfo          string = `SELECT id, site_def_id, started_at, ended_at, error, seen FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC;`
+	sqlCreateCrawlInfo       string = `INSERT INTO crawl_info (site_def_id, started_at, ended_at, status, seen) VALUES ($1, $2, $3, $4, $5);`
 )
 
 type pgStore struct {
@@ -42,7 +40,11 @@ type pgStore struct {
 	geoIP ipinfo.IPInfoer
 }
 
-var _ Store = (*pgStore)(nil)
+var _ ComicStore = (*pgStore)(nil)
+var _ Redirecter = (*pgStore)(nil)
+var _ SiteDefStore = (*pgStore)(nil)
+var _ SiteUpdateStore = (*pgStore)(nil)
+var _ CrawlInfoStore = (*pgStore)(nil)
 
 func NewPGStore(dsn string) (Store, error) {
 	var db Conn
@@ -67,6 +69,7 @@ func NewPGStore(dsn string) (Store, error) {
 	return &pgStore{db: db, geoIP: ip}, nil
 }
 
+// GetComics implements ComicStore.GetComics
 func (s *pgStore) GetComics() ([]Comic, error) {
 	comics := make([]Comic, 0)
 	err := s.db.Select(&comics, sqlGetComics)
@@ -77,16 +80,20 @@ func (s *pgStore) GetComics() ([]Comic, error) {
 	return comics, nil
 }
 
-func (s *pgStore) GetRedirectURL(updateID string) (string, error) {
+// Redirect implements Redirecter.Redirect
+func (s *pgStore) Redirect(id SiteUpdateID) (string, error) {
 	var result string
-	err := s.db.Get(&result, sqlGetRedirectURL, updateID)
+	err := s.db.Get(&result, sqlRedirect, id)
 	if err != nil {
 		return "", err
 	}
 	return result, nil
 }
 
-func (s *pgStore) RecordClick(updateID int, addr net.IP) error {
+// ClickLogger interface methods
+
+// CreateClickLog implements ClickLogger.CreateClickLog
+func (s *pgStore) CreateClickLog(id SiteUpdateID, addr net.IP) error {
 	geoLoc, err := s.geoIP.GetIPInfo(addr)
 	if err != nil {
 		return err
@@ -96,7 +103,7 @@ func (s *pgStore) RecordClick(updateID int, addr net.IP) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(sqlRecordClick, updateID, geoLoc.Country, geoLoc.Region, geoLoc.City)
+	_, err = tx.Exec(sqlSaveClick, id, geoLoc.Country, geoLoc.Region, geoLoc.City)
 	if err != nil {
 		return err
 	}
@@ -107,35 +114,37 @@ func (s *pgStore) RecordClick(updateID int, addr net.IP) error {
 	return nil
 }
 
-// CreateSiteDef persists the given SiteDef returning the id
-func (s *pgStore) CreateSiteDef(sd SiteDef) (int, error) {
+// CreateSiteDef implements SiteDefStore.CreateSiteDef
+func (s *pgStore) CreateSiteDef(sd SiteDef) (SiteDefID, error) {
 	var newid int
 	tx, err := s.db.Beginx()
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 	rows, err := tx.Query(sqlCreateSiteDef, sd.Name, sd.Active, sd.NSFW, sd.StartURL, sd.LastCheckedAt, sd.URLTemplate, sd.RefXpath, sd.RefRegexp, sd.TitleXpath, sd.TitleRegexp)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 	if rows.Next() {
-		rows.Scan(&newid)
+		if err := rows.Scan(&newid); err != nil {
+			return 0, err
+		}
 	}
 	err = tx.Commit()
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
-	return newid, nil
+	return SiteDefID(newid), nil
 }
 
-// GetAllSiteDefs returns all SiteDefs.
-func (s *pgStore) GetAllSiteDefs(includeInactive bool) ([]SiteDef, error) {
+// GetSiteDefs implements SiteDefStore.GetSiteDefs
+func (s *pgStore) GetSiteDefs(includeInactive bool) ([]SiteDef, error) {
 	var err error
 	defs := make([]SiteDef, 0)
 	if includeInactive {
-		err = s.db.Select(&defs, sqlGetAllSiteDefs)
+		err = s.db.Select(&defs, sqlGetSiteDefs)
 	} else {
-		err = s.db.Select(&defs, sqlGetAllSiteDefsActive)
+		err = s.db.Select(&defs, sqlGetActiveSiteDefs)
 	}
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
@@ -143,18 +152,18 @@ func (s *pgStore) GetAllSiteDefs(includeInactive bool) ([]SiteDef, error) {
 	return defs, nil
 }
 
-// GetSiteDefByID returns a SiteDef with the given ID.
-func (s *pgStore) GetSiteDefByID(id int64) (SiteDef, error) {
+// GetSiteDef implements SiteDefStore.GetSiteDef
+func (s *pgStore) GetSiteDef(id SiteDefID) (SiteDef, error) {
 	def := SiteDef{}
-	err := s.db.Get(&def, sqlGetSiteDefByID, id)
+	err := s.db.Get(&def, sqlGetSiteDef, id)
 	if err != nil {
 		return SiteDef{}, err
 	}
 	return def, nil
 }
 
-// GetSiteDefLastChecked returns the SiteDef with the oldest last_checked timestamp.
-func (s *pgStore) GetSiteDefLastChecked() (SiteDef, error) {
+// GetLastChecked implements SiteDefStore.GetLastChecked
+func (s *pgStore) GetLastChecked() (SiteDef, error) {
 	def := SiteDef{}
 	err := s.db.Get(&def, sqlGetSiteDefLastChecked)
 	if err != nil {
@@ -163,13 +172,13 @@ func (s *pgStore) GetSiteDefLastChecked() (SiteDef, error) {
 	return def, nil
 }
 
-// SaveSiteDef persists changes to a SiteDef.
-func (s *pgStore) SaveSiteDef(sd SiteDef) error {
+// UpdateSiteDef implements SiteDefStore.UpdateSiteDef
+func (s *pgStore) UpdateSiteDef(sd SiteDef) error {
 	tx, err := s.db.Beginx()
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(sqlSaveSiteDef, sd.Name, sd.Active, sd.NSFW, sd.StartURL, sd.LastCheckedAt, sd.URLTemplate, sd.RefXpath, sd.RefRegexp, sd.TitleXpath, sd.TitleRegexp, sd.ID)
+	_, err = tx.Exec(sqlUpdateSiteDef, sd.Name, sd.Active, sd.NSFW, sd.StartURL, sd.LastCheckedAt, sd.URLTemplate, sd.RefXpath, sd.RefRegexp, sd.TitleXpath, sd.TitleRegexp, sd.ID)
 	if err != nil {
 		return err
 	}
@@ -180,13 +189,13 @@ func (s *pgStore) SaveSiteDef(sd SiteDef) error {
 	return nil
 }
 
-// SetSiteDefLastChecked sets the last_checked of a SiteDef to the given time.
-func (s *pgStore) SetSiteDefLastChecked(sd SiteDef, when time.Time) error {
+// SetLastChecked implements SiteDefStore.SetLastChecked
+func (s *pgStore) SetLastChecked(sd SiteDef, when time.Time) error {
 	tx, err := s.db.Beginx()
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(sqlSetSiteDefLastChecked, when, sd.ID)
+	_, err = tx.Exec(sqlSetLastChecked, when, sd.ID)
 	if err != nil {
 		return err
 	}
@@ -197,49 +206,10 @@ func (s *pgStore) SetSiteDefLastChecked(sd SiteDef, when time.Time) error {
 	return nil
 }
 
-// CreateSiteUpdate persists a new SiteUpdate.
-func (s *pgStore) CreateSiteUpdate(su SiteUpdate) error {
-	tx, err := s.db.Beginx()
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec(sqlCreateSiteUpdate, su.SiteDefID, su.Ref, su.URL, su.Title, su.SeenAt)
-	if err != nil {
-		return err
-	}
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// GetSiteUpdatesBySiteDefID returns all SiteUpdates related to the SiteDef.
-func (s *pgStore) GetSiteUpdatesBySiteDefID(sdid int64) ([]SiteUpdate, error) {
-	var err error
-	updates := make([]SiteUpdate, 0)
-	err = s.db.Select(&updates, sqlGetSiteUpdatesBySiteDefID, sdid)
-	if err != nil {
-		return nil, err
-	}
-	return updates, nil
-}
-
-// GetSiteUpdateBySiteDefAndRef returns a SiteUpdate with the given ref related to the given SiteDef.
-func (s *pgStore) GetSiteUpdateBySiteDefAndRef(sdid int64, ref string) (SiteUpdate, error) {
-	update := SiteUpdate{}
-	err := s.db.Get(&update, sqlGetSiteUpdateBySiteDefAndRef, sdid, ref)
-	if err != nil {
-		return SiteUpdate{}, err
-	}
-	return update, nil
-}
-
-// GetStartURLForCrawl returns the URL of the latest SiteUpdate if present,
-// and nil otherwise (no SiteUpdates for SiteDef).
-func (s *pgStore) GetStartURLForCrawl(sd SiteDef) (string, error) {
+// GetLastURL implements SiteDefStore.GetLastURL
+func (s *pgStore) GetLastURL(sd SiteDef) (string, error) {
 	var nextUrl string
-	err := s.db.Get(&nextUrl, sqlGetStartURLForCrawl, sd.ID)
+	err := s.db.Get(&nextUrl, sqlGetLastURL, sd.ID)
 
 	if err != nil {
 		log.Info("Error fetching latest URL for SiteDef:", err)
@@ -249,30 +219,81 @@ func (s *pgStore) GetStartURLForCrawl(sd SiteDef) (string, error) {
 	return nextUrl, nil
 }
 
-func (s *pgStore) GetCrawlInfo() ([]CrawlInfo, error) {
+// SiteUpdateStore methods
+
+// CreateSiteUpdate implements SiteUpdateStore.CreateSiteUpdate
+func (s *pgStore) CreateSiteUpdate(su SiteUpdate) (SiteUpdateID, error) {
+	tx, err := s.db.Beginx()
+	if err != nil {
+		return 0, err
+	}
+	var newID int64
+	rows, err := tx.Query(sqlCreateSiteUpdate, su.SiteDefID, su.Ref, su.URL, su.Title, su.SeenAt)
+	if err != nil {
+		return 0, err
+	}
+	if rows.Next() {
+		if err := rows.Scan(&newID); err != nil {
+			return 0, err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+	return SiteUpdateID(newID), nil
+}
+
+// GetSiteUpdates implements SiteUpdateStore.GetSiteUpdates
+func (s *pgStore) GetSiteUpdates(id SiteDefID) ([]SiteUpdate, error) {
+	var err error
+	updates := make([]SiteUpdate, 0)
+	err = s.db.Select(&updates, sqlGetSiteUpdates, id)
+	if err != nil {
+		return nil, err
+	}
+	return updates, nil
+}
+
+// GetSiteUpdate implements SiteUpdateStore.GetSiteUpdate
+func (s *pgStore) GetSiteUpdate(id SiteDefID, ref string) (SiteUpdate, error) {
+	update := SiteUpdate{}
+	err := s.db.Get(&update, sqlGetSiteUpdate, id, ref)
+	if err != nil {
+		return SiteUpdate{}, err
+	}
+	return update, nil
+}
+
+// CrawlInfoStore methods
+
+// GetCrawlInfos implements CrawlInfoStore.GetCrawlInfos
+func (s *pgStore) GetCrawlInfos() ([]CrawlInfo, error) {
 	events := make([]CrawlInfo, 0)
-	err := s.db.Select(&events, sqlGetCrawlInfo)
+	err := s.db.Select(&events, sqlGetCrawlInfos)
 	if err != nil {
 		return nil, err
 	}
 	return events, nil
 }
 
-func (s *pgStore) GetCrawlInfoBySiteDefID(sdid int64) ([]CrawlInfo, error) {
+// GetCrawlInfo implements CrawlInfoStore.GetCrawlInfo
+func (s *pgStore) GetCrawlInfo(id SiteDefID) ([]CrawlInfo, error) {
 	events := make([]CrawlInfo, 0)
-	err := s.db.Select(&events, sqlGetCrawlInfoBySiteDefID, sdid)
+	err := s.db.Select(&events, sqlGetCrawlInfo, id)
 	if err != nil {
 		return nil, err
 	}
 	return events, nil
 }
 
+// CreateCrawlInfo implements CrawlInfoStore.CreateCrawlInfo
 func (s *pgStore) CreateCrawlInfo(ci CrawlInfo) error {
 	tx, err := s.db.Beginx()
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(sqlCreateCrawlInfo, ci.SiteDefID, ci.StartedAt, ci.EndedAt, ci.Status, ci.Seen)
+	_, err = tx.Exec(sqlCreateCrawlInfo, ci.SiteDefID, ci.StartedAt, ci.EndedAt, ci.Error, ci.Seen)
 	if err != nil {
 		return err
 	}
