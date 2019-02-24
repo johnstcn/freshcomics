@@ -30,7 +30,7 @@ const (
 	sqlGetLastURL            string = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
 	sqlGetCrawlInfos         string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos ORDER BY created_at DESC;`
 	sqlGetCrawlInfo          string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE site_def_id = $1 ORDER BY created_at DESC;`
-	sqlGetPendingCrawlInfos  string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE started_at IS NULL AND ended_at IS NULL ORDER BY created_at DESC;`
+	sqlGetPendingCrawlInfos  string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE started_at IS NULL AND ended_at IS NULL ORDER BY created_at ASC;`
 	sqlCreateCrawlInfo       string = `INSERT INTO crawl_infos (site_def_id) VALUES ($1) RETURNING ID;`
 	sqlStartCrawlInfo        string = `UPDATE crawl_infos SET started_at = CURRENT_TIMESTAMP WHERE id = $1;`
 	sqlEndCrawlInfo          string = `UPDATE crawl_infos SET (ended_at, error, seen) VALUES (CURRENT_TIMESTAMP, $2, $3) WHERE id = $1;`
