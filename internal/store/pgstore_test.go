@@ -474,32 +474,38 @@ func (s *PGStoreTestSuite) TestGetCrawlInfo_ErrQuery() {
 }
 
 func (s *PGStoreTestSuite) TestCreateCrawlInfo_OK() {
+	rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectExec(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testCrawlInfoA.SiteDefID, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Error, testCrawlInfoA.Seen).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testSiteDefA.ID).WillReturnRows(rows)
 	s.mdb.ExpectCommit()
-	err := s.store.CreateCrawlInfo(testCrawlInfoA)
+	id, err := s.store.CreateCrawlInfo(testSiteDefA.ID)
 	s.NoError(err)
+	s.EqualValues(1, id)
 }
 
 func (s *PGStoreTestSuite) TestCreateCrawlInfo_ErrBegin() {
 	s.mdb.ExpectBegin().WillReturnError(testError)
-	err := s.store.CreateCrawlInfo(testCrawlInfoA)
+	id, err := s.store.CreateCrawlInfo(testSiteDefA.ID)
 	s.EqualError(err, "some error")
+	s.Zero(id)
 }
 
 func (s *PGStoreTestSuite) TestCreateCrawlInfo_ErrExec() {
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectExec(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testCrawlInfoA.SiteDefID, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Error, testCrawlInfoA.Seen).WillReturnError(testError)
-	err := s.store.CreateCrawlInfo(testCrawlInfoA)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testSiteDefA.ID).WillReturnError(testError)
+	id, err := s.store.CreateCrawlInfo(testSiteDefA.ID)
 	s.EqualError(err, "some error")
+	s.Zero(id)
 }
 
 func (s *PGStoreTestSuite) TestCreateCrawlInfo_ErrCommit() {
+	rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectExec(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testCrawlInfoA.SiteDefID, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Error, testCrawlInfoA.Seen).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testSiteDefA.ID).WillReturnRows(rows)
 	s.mdb.ExpectCommit().WillReturnError(testError)
-	err := s.store.CreateCrawlInfo(testCrawlInfoA)
+	id, err := s.store.CreateCrawlInfo(testSiteDefA.ID)
 	s.EqualError(err, "some error")
+	s.EqualValues(0, id)
 }
 
 func TestStoreTestSuite(t *testing.T) {

@@ -30,9 +30,9 @@ const (
 	sqlGetSiteUpdates        string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
 	sqlGetSiteUpdate         string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
 	sqlGetLastURL            string = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
-	sqlGetCrawlInfos         string = `SELECT id, site_def_id, started_at, ended_at, error, seen FROM crawl_infos ORDER BY created_at DESC;`
-	sqlGetCrawlInfo          string = `SELECT id, site_def_id, started_at, ended_at, error, seen FROM crawl_infos WHERE site_def_id = $1 ORDER BY created_at DESC;`
-	sqlCreateCrawlInfo       string = `INSERT INTO crawl_infos (site_def_id, started_at, ended_at, status, seen) VALUES ($1, $2, $3, $4, $5);`
+	sqlGetCrawlInfos         string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos ORDER BY created_at DESC;`
+	sqlGetCrawlInfo          string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE site_def_id = $1 ORDER BY created_at DESC;`
+	sqlCreateCrawlInfo       string = `INSERT INTO crawl_infos (site_def_id) VALUES ($1) RETURNING ID;`
 )
 
 type pgStore struct {
@@ -288,18 +288,25 @@ func (s *pgStore) GetCrawlInfo(id SiteDefID) ([]CrawlInfo, error) {
 }
 
 // CreateCrawlInfo implements CrawlInfoStore.CreateCrawlInfo
-func (s *pgStore) CreateCrawlInfo(ci CrawlInfo) error {
+func (s *pgStore) CreateCrawlInfo(id SiteDefID) (CrawlInfoID, error) {
 	tx, err := s.db.Beginx()
 	if err != nil {
-		return err
+		return 0, err
 	}
-	_, err = tx.Exec(sqlCreateCrawlInfo, ci.SiteDefID, ci.StartedAt, ci.EndedAt, ci.Error, ci.Seen)
+
+	var newID int64
+	rows, err := tx.Query(sqlCreateCrawlInfo, id)
 	if err != nil {
-		return err
+		return 0, err
+	}
+	if rows.Next() {
+		if err := rows.Scan(&newID); err != nil {
+			return 0, err
+		}
 	}
 	err = tx.Commit()
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return CrawlInfoID(newID), nil
 }

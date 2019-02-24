@@ -21,11 +21,12 @@ CREATE TABLE IF NOT EXISTS site_updates (
 	seen_at			  timestamptz	NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS crawl_info (
+CREATE TABLE IF NOT EXISTS crawl_infos (
 	id				    serial		  PRIMARY KEY,
 	site_def_id		integer		  REFERENCES site_defs (id) ON DELETE CASCADE,
-	started_at		timestamptz	NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	created_at    timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	started_at		timestamptz,
 	ended_at      timestamptz,
-	error         text        NOT NULL,
+	error         text        NOT NULL DEFAULT "",
 	seen          integer     NOT NULL DEFAULT 0
 );

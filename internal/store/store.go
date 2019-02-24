@@ -57,8 +57,8 @@ type CrawlInfoStore interface {
 	GetCrawlInfos() ([]CrawlInfo, error)
 	// GetCrawlInfo returns all CrawlInfos for the given SiteDefID
 	GetCrawlInfo(id SiteDefID) ([]CrawlInfo, error)
-	// CreateCrawlInfo persists the given CrawlInfo
-	CreateCrawlInfo(ci CrawlInfo) error
+	// CreateCrawlInfo creates a new CrawlInfo for the given SiteDefID with default fields returning the id
+	CreateCrawlInfo(id SiteDefID) (CrawlInfoID, error)
 }
 
 type Conn interface {
