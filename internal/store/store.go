@@ -51,6 +51,8 @@ type CrawlInfoStore interface {
 	GetCrawlInfos() ([]CrawlInfo, error)
 	// GetCrawlInfo returns all CrawlInfos for the given SiteDefID
 	GetCrawlInfo(id SiteDefID) ([]CrawlInfo, error)
+	// GetPendingCrawlInfos returns all CrawlInfos where started_at and ended_at is null
+	GetPendingCrawlInfos() ([]CrawlInfo, error)
 	// CreateCrawlInfo creates a new CrawlInfo for the given SiteDefID with default fields returning the id
 	CreateCrawlInfo(id SiteDefID) (CrawlInfoID, error)
 	// StartCrawlInfo sets started_at to the current time for the given CrawlInfoID

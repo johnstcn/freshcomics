@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS site_defs (
 	active		    	boolean		  NOT NULL DEFAULT FALSE,
 	nsfw			      boolean		  NOT NULL DEFAULT FALSE,
 	start_url 		  text 		    NOT NULL DEFAULT 'http://example.com' UNIQUE,
-	last_checked_at timestamptz	NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	url_template 	  text 		    NOT NULL DEFAULT 'http://example.com/%s' UNIQUE,
 	ref_xpath 		  text 		    NOT NULL DEFAULT '//a[@rel="next"]/@href',
 	ref_regexp 		  text 		    NOT NULL DEFAULT '([^/]+)/?$',

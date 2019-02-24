@@ -30,6 +30,7 @@ const (
 	sqlGetLastURL            string = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
 	sqlGetCrawlInfos         string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos ORDER BY created_at DESC;`
 	sqlGetCrawlInfo          string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE site_def_id = $1 ORDER BY created_at DESC;`
+	sqlGetPendingCrawlInfos  string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE started_at IS NULL AND ended_at IS NULL ORDER BY created_at DESC;`
 	sqlCreateCrawlInfo       string = `INSERT INTO crawl_infos (site_def_id) VALUES ($1) RETURNING ID;`
 	sqlStartCrawlInfo        string = `UPDATE crawl_infos SET started_at = CURRENT_TIMESTAMP WHERE id = $1;`
 	sqlEndCrawlInfo          string = `UPDATE crawl_infos SET (ended_at, error, seen) VALUES (CURRENT_TIMESTAMP, $2, $3) WHERE id = $1;`
@@ -240,24 +241,35 @@ func (s *pgStore) GetSiteUpdate(id SiteDefID, ref string) (SiteUpdate, error) {
 
 // CrawlInfoStore methods
 
+// TODO(cian): limit
 // GetCrawlInfos implements CrawlInfoStore.GetCrawlInfos
 func (s *pgStore) GetCrawlInfos() ([]CrawlInfo, error) {
-	events := make([]CrawlInfo, 0)
-	err := s.db.Select(&events, sqlGetCrawlInfos)
+	infos := make([]CrawlInfo, 0)
+	err := s.db.Select(&infos, sqlGetCrawlInfos)
 	if err != nil {
 		return nil, err
 	}
-	return events, nil
+	return infos, nil
 }
 
 // GetCrawlInfo implements CrawlInfoStore.GetCrawlInfo
 func (s *pgStore) GetCrawlInfo(id SiteDefID) ([]CrawlInfo, error) {
-	events := make([]CrawlInfo, 0)
-	err := s.db.Select(&events, sqlGetCrawlInfo, id)
+	infos := make([]CrawlInfo, 0)
+	err := s.db.Select(&infos, sqlGetCrawlInfo, id)
 	if err != nil {
 		return nil, err
 	}
-	return events, nil
+	return infos, nil
+}
+
+// GetPendingCrawlInfos implements CrawlinfoStore.GetPendingCrawlInfos
+func (s *pgStore) GetPendingCrawlInfos() ([]CrawlInfo, error) {
+	infos := make([]CrawlInfo, 0)
+	err := s.db.Select(&infos, sqlGetPendingCrawlInfos)
+	if err != nil {
+		return nil, err
+	}
+	return infos, nil
 }
 
 // CreateCrawlInfo implements CrawlInfoStore.CreateCrawlInfo
