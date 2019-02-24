@@ -1,8 +1,6 @@
 package store
 
 import (
-	"time"
-
 	"github.com/jmoiron/sqlx"
 )
 
@@ -35,10 +33,6 @@ type SiteDefStore interface {
 	CreateSiteDef(sd SiteDef) (SiteDefID, error)
 	// UpdateSiteDef updates the given SiteDef
 	UpdateSiteDef(sd SiteDef) error
-	// GetLastChecked returns the SiteDef last checked.
-	GetLastChecked() (SiteDef, error)
-	// SetLastChecked sets last checked of the given SiteDef to when.
-	SetLastChecked(sd SiteDef, when time.Time) error
 	// GetLastURL returns the last URL seen for the given SiteDef.
 	GetLastURL(sd SiteDef) (string, error)
 }

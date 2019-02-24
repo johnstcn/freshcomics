@@ -23,9 +23,7 @@ const (
 	sqlGetSiteDefs           string = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs ORDER BY name ASC;`
 	sqlGetActiveSiteDefs     string = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE active = TRUE ORDER BY NAME ASC;`
 	sqlGetSiteDef            string = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE id = $1;`
-	sqlGetSiteDefLastChecked string = `SELECT id, name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp  FROM site_defs ORDER BY last_checked_at ASC LIMIT 1;`
 	sqlUpdateSiteDef         string = `UPDATE site_defs SET (name, active, nsfw, start_url, last_checked_at, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id = $11;`
-	sqlSetLastChecked        string = `UPDATE site_defs SET last_checked_at = $1 WHERE id = $2;`
 	sqlCreateSiteUpdate      string = `INSERT INTO site_updates (site_def_id, ref, url, title, seen_at) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
 	sqlGetSiteUpdates        string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
 	sqlGetSiteUpdate         string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
@@ -164,16 +162,6 @@ func (s *pgStore) GetSiteDef(id SiteDefID) (SiteDef, error) {
 	return def, nil
 }
 
-// GetLastChecked implements SiteDefStore.GetLastChecked
-func (s *pgStore) GetLastChecked() (SiteDef, error) {
-	def := SiteDef{}
-	err := s.db.Get(&def, sqlGetSiteDefLastChecked)
-	if err != nil {
-		return SiteDef{}, err
-	}
-	return def, nil
-}
-
 // UpdateSiteDef implements SiteDefStore.UpdateSiteDef
 func (s *pgStore) UpdateSiteDef(sd SiteDef) error {
 	tx, err := s.db.Beginx()
@@ -181,23 +169,6 @@ func (s *pgStore) UpdateSiteDef(sd SiteDef) error {
 		return err
 	}
 	_, err = tx.Exec(sqlUpdateSiteDef, sd.Name, sd.Active, sd.NSFW, sd.StartURL, sd.LastCheckedAt, sd.URLTemplate, sd.RefXpath, sd.RefRegexp, sd.TitleXpath, sd.TitleRegexp, sd.ID)
-	if err != nil {
-		return err
-	}
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// SetLastChecked implements SiteDefStore.SetLastChecked
-func (s *pgStore) SetLastChecked(sd SiteDef, when time.Time) error {
-	tx, err := s.db.Beginx()
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec(sqlSetLastChecked, when, sd.ID)
 	if err != nil {
 		return err
 	}
