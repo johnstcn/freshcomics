@@ -508,6 +508,64 @@ func (s *PGStoreTestSuite) TestCreateCrawlInfo_ErrCommit() {
 	s.EqualValues(0, id)
 }
 
+func (s *PGStoreTestSuite) TestStartCrawlInfo_OK() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlStartCrawlInfo)).WithArgs(testCrawlInfoA.ID).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectCommit()
+	err := s.store.StartCrawlInfo(testCrawlInfoA.ID)
+	s.NoError(err)
+}
+
+func (s *PGStoreTestSuite) TestStartCrawlInfo_ErrBegin() {
+	s.mdb.ExpectBegin().WillReturnError(testError)
+	err := s.store.StartCrawlInfo(testCrawlInfoA.ID)
+	s.EqualError(err, "some error")
+}
+
+func (s *PGStoreTestSuite) TestStartCrawlInfo_ErrExec() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlStartCrawlInfo)).WithArgs(testCrawlInfoA.ID).WillReturnError(testError)
+	err := s.store.StartCrawlInfo(testCrawlInfoA.ID)
+	s.EqualError(err, "some error")
+}
+
+func (s *PGStoreTestSuite) TestStartCrawlInfo_ErrCommit() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlStartCrawlInfo)).WithArgs(testCrawlInfoA.ID).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectCommit().WillReturnError(testError)
+	err := s.store.StartCrawlInfo(testCrawlInfoA.ID)
+	s.EqualError(err, "some error")
+}
+
+func (s *PGStoreTestSuite) TestEndCrawlInfo_OK() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlEndCrawlInfo)).WithArgs(testCrawlInfoA.ID, testError, 1).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectCommit()
+	err := s.store.EndCrawlInfo(testCrawlInfoA.ID, testError, 1)
+	s.NoError(err)
+}
+
+func (s *PGStoreTestSuite) TestEndCrawlInfo_ErrBegin() {
+	s.mdb.ExpectBegin().WillReturnError(testError)
+	err := s.store.EndCrawlInfo(testCrawlInfoA.ID, testError, 1)
+	s.EqualError(err, "some error")
+}
+
+func (s *PGStoreTestSuite) TestEndCrawlInfo_ErrExec() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlEndCrawlInfo)).WithArgs(testCrawlInfoA.ID, testError, 1).WillReturnError(testError)
+	err := s.store.EndCrawlInfo(testCrawlInfoA.ID, testError, 1)
+	s.EqualError(err, "some error")
+}
+
+func (s *PGStoreTestSuite) TestEndCrawlInfo_ErrCommit() {
+	s.mdb.ExpectBegin()
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlEndCrawlInfo)).WithArgs(testCrawlInfoA.ID, testError, 1).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectCommit().WillReturnError(testError)
+	err := s.store.EndCrawlInfo(testCrawlInfoA.ID, testError, 1)
+	s.EqualError(err, "some error")
+}
+
 func TestStoreTestSuite(t *testing.T) {
 	suite.Run(t, new(PGStoreTestSuite))
 }

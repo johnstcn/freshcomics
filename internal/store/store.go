@@ -59,6 +59,10 @@ type CrawlInfoStore interface {
 	GetCrawlInfo(id SiteDefID) ([]CrawlInfo, error)
 	// CreateCrawlInfo creates a new CrawlInfo for the given SiteDefID with default fields returning the id
 	CreateCrawlInfo(id SiteDefID) (CrawlInfoID, error)
+	// StartCrawlInfo sets started_at to the current time for the given CrawlInfoID
+	StartCrawlInfo(id CrawlInfoID) error
+	// EndCrawlInfo sets ended_at to the current timestamp for the given CrawlInfoID and sets error and seen to the given values
+	EndCrawlInfo(id CrawlInfoID, crawlErr error, seen int) error
 }
 
 type Conn interface {

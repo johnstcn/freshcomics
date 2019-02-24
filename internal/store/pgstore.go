@@ -33,6 +33,8 @@ const (
 	sqlGetCrawlInfos         string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos ORDER BY created_at DESC;`
 	sqlGetCrawlInfo          string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE site_def_id = $1 ORDER BY created_at DESC;`
 	sqlCreateCrawlInfo       string = `INSERT INTO crawl_infos (site_def_id) VALUES ($1) RETURNING ID;`
+	sqlStartCrawlInfo        string = `UPDATE crawl_infos SET started_at = CURRENT_TIMESTAMP WHERE id = $1;`
+	sqlEndCrawlInfo          string = `UPDATE crawl_infos SET (ended_at, error, seen) VALUES (CURRENT_TIMESTAMP, $2, $3) WHERE id = $1;`
 )
 
 type pgStore struct {
@@ -309,4 +311,45 @@ func (s *pgStore) CreateCrawlInfo(id SiteDefID) (CrawlInfoID, error) {
 		return 0, err
 	}
 	return CrawlInfoID(newID), nil
+}
+
+// StartCrawlInfo implements CrawlInfoStore.StartCrawlInfo
+func (s *pgStore) StartCrawlInfo(id CrawlInfoID) error {
+	tx, err := s.db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(sqlStartCrawlInfo, id)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// EndCrawlInfo implements CrawlInfoStore.EndCrawlInfo
+func (s *pgStore) EndCrawlInfo(id CrawlInfoID, crawlErr error, seen int) error {
+	tx, err := s.db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	var errString string
+	if crawlErr != nil {
+		errString = crawlErr.Error()
+	}
+
+	_, err = tx.Exec(sqlEndCrawlInfo, id, errString, seen)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
 }
