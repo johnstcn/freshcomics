@@ -33,7 +33,6 @@ type SiteDef struct {
 	Active        bool      `db:"active"`
 	NSFW          bool      `db:"nsfw"`
 	StartURL      string    `db:"start_url"`
-	LastCheckedAt time.Time `db:"last_checked_at"`
 	URLTemplate   string    `db:"url_template"`
 	RefXpath      string    `db:"ref_xpath"`
 	RefRegexp     string    `db:"ref_regexp"`
