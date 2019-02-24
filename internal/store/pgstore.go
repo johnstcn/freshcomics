@@ -30,9 +30,9 @@ const (
 	sqlGetSiteUpdates        string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
 	sqlGetSiteUpdate         string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
 	sqlGetLastURL            string = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
-	sqlGetCrawlInfos         string = `SELECT id, site_def_id, started_at, ended_at, error, seen FROM crawl_events ORDER BY created_at DESC;`
-	sqlGetCrawlInfo          string = `SELECT id, site_def_id, started_at, ended_at, error, seen FROM crawl_events WHERE site_def_id = $1 ORDER BY created_at DESC;`
-	sqlCreateCrawlInfo       string = `INSERT INTO crawl_info (site_def_id, started_at, ended_at, status, seen) VALUES ($1, $2, $3, $4, $5);`
+	sqlGetCrawlInfos         string = `SELECT id, site_def_id, started_at, ended_at, error, seen FROM crawl_infos ORDER BY created_at DESC;`
+	sqlGetCrawlInfo          string = `SELECT id, site_def_id, started_at, ended_at, error, seen FROM crawl_infos WHERE site_def_id = $1 ORDER BY created_at DESC;`
+	sqlCreateCrawlInfo       string = `INSERT INTO crawl_infos (site_def_id, started_at, ended_at, status, seen) VALUES ($1, $2, $3, $4, $5);`
 )
 
 type pgStore struct {
