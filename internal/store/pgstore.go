@@ -181,12 +181,11 @@ func (s *pgStore) UpdateSiteDef(sd SiteDef) error {
 }
 
 // GetLastURL implements SiteDefStore.GetLastURL
-func (s *pgStore) GetLastURL(sd SiteDef) (string, error) {
+func (s *pgStore) GetLastURL(id SiteDefID) (string, error) {
 	var nextUrl string
-	err := s.db.Get(&nextUrl, sqlGetLastURL, sd.ID)
+	err := s.db.Get(&nextUrl, sqlGetLastURL, id)
 
 	if err != nil {
-		log.Info("Error fetching latest URL for SiteDef:", err)
 		return "", err
 	}
 

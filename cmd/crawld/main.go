@@ -1,4 +1,4 @@
-package comiccrawler
+package main
 
 //go:generate go-bindata -prefix "web/templates/" -pkg web -o web/templates.go web/templates/
 
@@ -7,13 +7,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/johnstcn/freshcomics/internal/common/log"
 	"github.com/johnstcn/freshcomics/internal/crawler/config"
 	"github.com/johnstcn/freshcomics/internal/crawler/util"
 	"github.com/johnstcn/freshcomics/internal/crawler/web"
-	"github.com/johnstcn/freshcomics/internal/common/log"
 	"github.com/johnstcn/freshcomics/internal/store"
 )
-
 
 func ServeAdmin(host string, port int, a *web.Admin) {
 	listenAddress := fmt.Sprintf("%s:%d", host, port)
@@ -24,8 +23,10 @@ func ServeAdmin(host string, port int, a *web.Admin) {
 func ScheduleCrawls(s store.Store, tick, checkInterval time.Duration) {
 	for {
 		now := time.Now().UTC()
-		def, _ := s.GetSiteDefLastChecked()
-		if def != nil {
+		def, err := s.GetLastChecked()
+		if err != nil {
+			log.Error(err)
+		} else {
 			delta := now.Sub(def.LastCheckedAt)
 			shouldCheck := delta > checkInterval
 			log.Debug("def", def.Name, "last checked", def.LastCheckedAt)
@@ -33,9 +34,7 @@ func ScheduleCrawls(s store.Store, tick, checkInterval time.Duration) {
 			log.Debug("checkInterval:", checkInterval)
 			log.Debug("delta:", delta)
 			if shouldCheck {
-				go util.Crawl(s, def)
-			} else {
-				log.Debug("nothing to schedule")
+				go util.Crawl(s, &def)
 			}
 		}
 		log.Debug("sleeping for", tick)
@@ -46,11 +45,11 @@ func ScheduleCrawls(s store.Store, tick, checkInterval time.Duration) {
 func main() {
 	tick := time.Duration(config.Cfg.CrawlDispatchSecs) * time.Second
 	checkInterval := time.Duration(config.Cfg.CheckIntervalSecs) * time.Second
-	store, err := store.NewStore(config.Cfg.DSN)
+	pgStore, err := store.NewPGStore(config.Cfg.DSN)
 	if err != nil {
 		panic(err)
 	}
-	admin := web.NewAdmin(store)
-	go ScheduleCrawls(store, tick, checkInterval)
+	admin := web.NewAdmin(pgStore)
+	go ScheduleCrawls(pgStore, tick, checkInterval)
 	ServeAdmin(config.Cfg.Host, config.Cfg.Port, admin)
 }

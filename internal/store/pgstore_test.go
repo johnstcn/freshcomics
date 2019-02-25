@@ -380,15 +380,15 @@ func (s *PGStoreTestSuite) TestGetSiteUpdate_ErrQuery() {
 func (s *PGStoreTestSuite) TestGetLastURL_OK() {
 	rows := sqlmock.NewRows([]string{"url"})
 	rows.AddRow(testSiteUpdateA.URL)
-	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetLastURL)).WillReturnRows(rows)
-	url, err := s.store.GetLastURL(testSiteDefA)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetLastURL)).WithArgs(testSiteDefA.ID).WillReturnRows(rows)
+	url, err := s.store.GetLastURL(testSiteDefA.ID)
 	s.NoError(err)
 	s.EqualValues(testSiteUpdateA.URL, url)
 }
 
 func (s *PGStoreTestSuite) TestGetLastURL_ErrQuery() {
-	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetLastURL)).WillReturnError(testError)
-	url, err := s.store.GetLastURL(testSiteDefA)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetLastURL)).WithArgs(testSiteDefA.ID).WillReturnError(testError)
+	url, err := s.store.GetLastURL(testSiteDefA.ID)
 	s.Zero(url)
 	s.EqualError(err, "some error")
 }

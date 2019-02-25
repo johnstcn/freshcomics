@@ -35,7 +35,7 @@ type SiteDefStore interface {
 	// UpdateSiteDef updates the given SiteDef
 	UpdateSiteDef(sd SiteDef) error
 	// GetLastURL returns the last URL seen for the given SiteDef.
-	GetLastURL(sd SiteDef) (string, error)
+	GetLastURL(id SiteDefID) (string, error)
 }
 
 type SiteUpdateStore interface {
