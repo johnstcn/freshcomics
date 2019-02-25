@@ -26,6 +26,6 @@ CREATE TABLE IF NOT EXISTS crawl_infos (
 	created_at    timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	started_at		timestamptz,
 	ended_at      timestamptz,
-	error         text        NOT NULL DEFAULT "",
+	error         text        NOT NULL DEFAULT '',
 	seen          integer     NOT NULL DEFAULT 0
 );
