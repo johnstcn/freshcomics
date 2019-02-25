@@ -14,6 +14,7 @@ type Store interface {
 	CrawlInfoStore
 }
 
+// TODO return a ComicList with the timestamp
 type ComicStore interface {
 	// GetComics returns the latest comics
 	GetComics() ([]Comic, error)
