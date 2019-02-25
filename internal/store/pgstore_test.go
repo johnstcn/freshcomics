@@ -54,6 +54,7 @@ var testSiteUpdateA = SiteUpdate{
 var testCrawlInfoA = CrawlInfo{
 	ID:        CrawlInfoID(1),
 	SiteDefID: SiteDefID(1),
+	URL:       "http://example.com",
 	StartedAt: time.Unix(0, 0),
 	EndedAt:   time.Unix(1, 0),
 	Seen:      1,
@@ -393,8 +394,8 @@ func (s *PGStoreTestSuite) TestGetLastURL_ErrQuery() {
 }
 
 func (s *PGStoreTestSuite) TestGetCrawlInfos_OK() {
-	rows := sqlmock.NewRows([]string{"id", "site_def_id", "started_at", "ended_at", "error", "seen"})
-	rows.AddRow(testCrawlInfoA.ID, testCrawlInfoA.SiteDefID, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Error, testCrawlInfoA.Seen)
+	rows := sqlmock.NewRows([]string{"id", "site_def_id", "url", "started_at", "ended_at", "error", "seen"})
+	rows.AddRow(testCrawlInfoA.ID, testCrawlInfoA.SiteDefID, testCrawlInfoA.URL, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Error, testCrawlInfoA.Seen)
 	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetCrawlInfos)).WillReturnRows(rows)
 	ci, err := s.store.GetCrawlInfos()
 	s.NoError(err)
@@ -410,8 +411,8 @@ func (s *PGStoreTestSuite) TestGetCrawlInfos_ErrQuery() {
 }
 
 func (s *PGStoreTestSuite) TestGetCrawlInfo_OK() {
-	rows := sqlmock.NewRows([]string{"id", "site_def_id", "started_at", "ended_at", "error", "seen"})
-	rows.AddRow(testCrawlInfoA.ID, testCrawlInfoA.SiteDefID, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Error, testCrawlInfoA.Seen)
+	rows := sqlmock.NewRows([]string{"id", "site_def_id", "url", "started_at", "ended_at", "error", "seen"})
+	rows.AddRow(testCrawlInfoA.ID, testCrawlInfoA.SiteDefID, testCrawlInfoA.URL, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Error, testCrawlInfoA.Seen)
 	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetCrawlInfo)).WillReturnRows(rows)
 	ci, err := s.store.GetCrawlInfo(1)
 	s.NoError(err)
@@ -429,24 +430,24 @@ func (s *PGStoreTestSuite) TestGetCrawlInfo_ErrQuery() {
 func (s *PGStoreTestSuite) TestCreateCrawlInfo_OK() {
 	rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testSiteDefA.ID).WillReturnRows(rows)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testCrawlInfoA.SiteDefID, testCrawlInfoA.URL).WillReturnRows(rows)
 	s.mdb.ExpectCommit()
-	id, err := s.store.CreateCrawlInfo(testSiteDefA.ID)
+	id, err := s.store.CreateCrawlInfo(testCrawlInfoA.SiteDefID, testCrawlInfoA.URL)
 	s.NoError(err)
 	s.EqualValues(1, id)
 }
 
 func (s *PGStoreTestSuite) TestCreateCrawlInfo_ErrBegin() {
 	s.mdb.ExpectBegin().WillReturnError(testError)
-	id, err := s.store.CreateCrawlInfo(testSiteDefA.ID)
+	id, err := s.store.CreateCrawlInfo(testCrawlInfoA.SiteDefID, testCrawlInfoA.URL)
 	s.EqualError(err, "some error")
 	s.Zero(id)
 }
 
 func (s *PGStoreTestSuite) TestCreateCrawlInfo_ErrExec() {
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testSiteDefA.ID).WillReturnError(testError)
-	id, err := s.store.CreateCrawlInfo(testSiteDefA.ID)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testCrawlInfoA.SiteDefID, testCrawlInfoA.URL).WillReturnError(testError)
+	id, err := s.store.CreateCrawlInfo(testCrawlInfoA.SiteDefID, testCrawlInfoA.URL)
 	s.EqualError(err, "some error")
 	s.Zero(id)
 }
@@ -454,9 +455,9 @@ func (s *PGStoreTestSuite) TestCreateCrawlInfo_ErrExec() {
 func (s *PGStoreTestSuite) TestCreateCrawlInfo_ErrCommit() {
 	rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testSiteDefA.ID).WillReturnRows(rows)
+	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlCreateCrawlInfo)).WithArgs(testCrawlInfoA.SiteDefID, testCrawlInfoA.URL).WillReturnRows(rows)
 	s.mdb.ExpectCommit().WillReturnError(testError)
-	id, err := s.store.CreateCrawlInfo(testSiteDefA.ID)
+	id, err := s.store.CreateCrawlInfo(testCrawlInfoA.SiteDefID, testCrawlInfoA.URL)
 	s.EqualError(err, "some error")
 	s.EqualValues(0, id)
 }
@@ -492,7 +493,7 @@ func (s *PGStoreTestSuite) TestStartCrawlInfo_ErrCommit() {
 
 func (s *PGStoreTestSuite) TestEndCrawlInfo_OK() {
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectExec(regexp.QuoteMeta(sqlEndCrawlInfo)).WithArgs(testCrawlInfoA.ID, testError, 1).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlEndCrawlInfo)).WithArgs(testCrawlInfoA.ID, testError.Error(), 1).WillReturnResult(driver.ResultNoRows)
 	s.mdb.ExpectCommit()
 	err := s.store.EndCrawlInfo(testCrawlInfoA.ID, testError, 1)
 	s.NoError(err)
@@ -506,14 +507,14 @@ func (s *PGStoreTestSuite) TestEndCrawlInfo_ErrBegin() {
 
 func (s *PGStoreTestSuite) TestEndCrawlInfo_ErrExec() {
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectExec(regexp.QuoteMeta(sqlEndCrawlInfo)).WithArgs(testCrawlInfoA.ID, testError, 1).WillReturnError(testError)
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlEndCrawlInfo)).WithArgs(testCrawlInfoA.ID, testError.Error(), 1).WillReturnError(testError)
 	err := s.store.EndCrawlInfo(testCrawlInfoA.ID, testError, 1)
 	s.EqualError(err, "some error")
 }
 
 func (s *PGStoreTestSuite) TestEndCrawlInfo_ErrCommit() {
 	s.mdb.ExpectBegin()
-	s.mdb.ExpectExec(regexp.QuoteMeta(sqlEndCrawlInfo)).WithArgs(testCrawlInfoA.ID, testError, 1).WillReturnResult(driver.ResultNoRows)
+	s.mdb.ExpectExec(regexp.QuoteMeta(sqlEndCrawlInfo)).WithArgs(testCrawlInfoA.ID, testError.Error(), 1).WillReturnResult(driver.ResultNoRows)
 	s.mdb.ExpectCommit().WillReturnError(testError)
 	err := s.store.EndCrawlInfo(testCrawlInfoA.ID, testError, 1)
 	s.EqualError(err, "some error")

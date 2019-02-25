@@ -52,6 +52,7 @@ type SiteUpdate struct {
 type CrawlInfo struct {
 	ID        CrawlInfoID `db:"id"`
 	SiteDefID SiteDefID   `db:"site_def_id"`
+	URL       string      `db:"url"`
 	StartedAt time.Time   `db:"started_at"`
 	EndedAt   time.Time   `db:"ended_at"`
 	Error     string      `db:"error"`

@@ -28,10 +28,10 @@ const (
 	sqlGetSiteUpdates        string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
 	sqlGetSiteUpdate         string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
 	sqlGetLastURL            string = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
-	sqlGetCrawlInfos         string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos ORDER BY created_at DESC;`
-	sqlGetCrawlInfo          string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE site_def_id = $1 ORDER BY created_at DESC;`
-	sqlGetPendingCrawlInfos  string = `SELECT id, site_def_id, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE started_at IS NULL AND ended_at IS NULL ORDER BY created_at ASC;`
-	sqlCreateCrawlInfo       string = `INSERT INTO crawl_infos (site_def_id) VALUES ($1) RETURNING ID;`
+	sqlGetCrawlInfos         string = `SELECT id, site_def_id, url, created_at, started_at, ended_at, error, seen FROM crawl_infos ORDER BY created_at DESC;`
+	sqlGetCrawlInfo          string = `SELECT id, site_def_id, url, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE site_def_id = $1 ORDER BY created_at DESC;`
+	sqlGetPendingCrawlInfos  string = `SELECT id, site_def_id, url, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE started_at IS NULL AND ended_at IS NULL ORDER BY created_at ASC;`
+	sqlCreateCrawlInfo       string = `INSERT INTO crawl_infos (site_def_id, url) VALUES ($1, $2) RETURNING ID;`
 	sqlStartCrawlInfo        string = `UPDATE crawl_infos SET started_at = CURRENT_TIMESTAMP WHERE id = $1;`
 	sqlEndCrawlInfo          string = `UPDATE crawl_infos SET (ended_at, error, seen) VALUES (CURRENT_TIMESTAMP, $2, $3) WHERE id = $1;`
 )
@@ -273,14 +273,14 @@ func (s *pgStore) GetPendingCrawlInfos() ([]CrawlInfo, error) {
 }
 
 // CreateCrawlInfo implements CrawlInfoStore.CreateCrawlInfo
-func (s *pgStore) CreateCrawlInfo(id SiteDefID) (CrawlInfoID, error) {
+func (s *pgStore) CreateCrawlInfo(id SiteDefID, url string) (CrawlInfoID, error) {
 	tx, err := s.db.Beginx()
 	if err != nil {
 		return 0, err
 	}
 
 	var newID int64
-	rows, err := tx.Query(sqlCreateCrawlInfo, id)
+	rows, err := tx.Query(sqlCreateCrawlInfo, id, url)
 	if err != nil {
 		return 0, err
 	}
