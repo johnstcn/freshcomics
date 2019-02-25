@@ -49,6 +49,7 @@ func (d *CrawlDaemon) Run() error {
 	}()
 	go d.scheduleWorkForever()
 	go d.doWorkForever()
+	return nil
 }
 
 func (d *CrawlDaemon) scheduleWorkForever() {
@@ -177,7 +178,7 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) {
 			URL:     ci.URL,
 			Method:  http.MethodGet,
 			Headers: map[string]string{"User-Agent": d.config.UserAgent},
-			Body:    nil,
+			Body:    "",
 		},
 		Rules: []crawl.Rule{
 			{
