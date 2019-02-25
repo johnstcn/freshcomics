@@ -1,0 +1,49 @@
+version: '3'
+services:
+#  frontend:
+#    ports:
+#      - "8000:8000"
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.frontend
+#    image: johnstcn/freshcomics-frontend:latest
+#    depends_on:
+#      - db
+#    networks:
+#      - freshcomics-network
+
+  crawler:
+    ports:
+      - "8001:8001"
+    build:
+      context: .
+      dockerfile: Dockerfile.crawld
+    image: johnstcn/freshcomics-crawld:latest
+    environment:
+      - CRAWLD_DSN=host=localhost user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable
+      - CRAWLD_USERAGENT=freshcomics/crawld
+      - CRAWLD_FETCHTIMEOUTSECS=3
+      - CRAWLD_CHECKINTERVALSECS=3600
+      - CRAWLD_WORKPOLLINTERVALSECS=10
+      - CRAWLD_SCHEDULEINTERVALSECS=60
+    depends_on:
+      - db
+    networks:
+      - freshcomics-network
+
+  db:
+    image: postgres:11
+    ports:
+      - "5432"
+    restart: always
+    volumes:
+      - ./resources/db:/docker-entrypoint-initdb.d/
+    networks:
+      - freshcomics-network
+    environment:
+      - POSTGRES_USER=freshcomics
+      - POSTGRES_PASSWORD=freshcomics_password
+      - POSTGRES_DB=freshcomicsdb
+
+networks:
+  freshcomics-network:
