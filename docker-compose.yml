@@ -20,7 +20,7 @@ services:
       dockerfile: Dockerfile.crawld
     image: johnstcn/freshcomics-crawld:latest
     environment:
-      - CRAWLD_DSN=host=localhost user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable
+      - CRAWLD_DSN=host=db user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable
       - CRAWLD_USERAGENT=freshcomics/crawld
       - CRAWLD_FETCHTIMEOUTSECS=3
       - CRAWLD_CHECKINTERVALSECS=3600
