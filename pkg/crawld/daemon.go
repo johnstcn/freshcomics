@@ -118,8 +118,13 @@ func (d *CrawlDaemon) scheduleWorkOnce() error {
 			continue
 		}
 
-		nextScheduleTime := crawls[0].EndedAt.Add(time.Duration(d.config.CheckIntervalSecs) * time.Second)
-		shouldSchedule := nextScheduleTime.After(d.now())
+		var shouldSchedule bool
+		if len(crawls) == 0 {
+			shouldSchedule = true
+		} else {
+			nextScheduleTime := crawls[0].EndedAt.Add(time.Duration(d.config.CheckIntervalSecs) * time.Second)
+			shouldSchedule = nextScheduleTime.After(d.now())
+		}
 
 		if !shouldSchedule {
 			continue

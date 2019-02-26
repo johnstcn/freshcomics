@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS site_updates (
 CREATE TABLE IF NOT EXISTS crawl_infos (
 	id				    serial		  PRIMARY KEY,
 	site_def_id		integer		  REFERENCES site_defs (id) ON DELETE CASCADE,
+	url           text        NOT NULL,
 	created_at    timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	started_at		timestamptz,
 	ended_at      timestamptz,
