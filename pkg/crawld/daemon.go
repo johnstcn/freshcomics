@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/johnstcn/freshcomics/internal/store"
@@ -22,40 +25,61 @@ func New(cfg Config) (*CrawlDaemon, error) {
 	if err != nil {
 		return nil, err
 	}
+	stopScheduler := make(chan bool)
+	stopWorker := make(chan bool)
 	return &CrawlDaemon{
-		crawler:     crawl.New(opts),
-		config:      cfg,
-		siteDefs:    pgstore,
-		siteUpdates: pgstore,
-		crawlInfos:  pgstore,
+		stopScheduler: stopScheduler,
+		stopWorker:    stopWorker,
+		now:           time.Now,
+		exit:          os.Exit,
+		crawler:       crawl.New(opts),
+		config:        cfg,
+		siteDefs:      pgstore,
+		siteUpdates:   pgstore,
+		crawlInfos:    pgstore,
 	}, nil
 }
 
 type CrawlDaemon struct {
-	stop        chan bool
-	now         func() time.Time
-	crawler     crawl.Crawler
-	config      Config
-	siteDefs    store.SiteDefStore
-	siteUpdates store.SiteUpdateStore
-	crawlInfos  store.CrawlInfoStore
+	stopScheduler chan bool
+	stopWorker    chan bool
+	now           func() time.Time
+	exit          func(status int)
+	crawler       crawl.Crawler
+	config        Config
+	siteDefs      store.SiteDefStore
+	siteUpdates   store.SiteUpdateStore
+	crawlInfos    store.CrawlInfoStore
 }
 
 func (d *CrawlDaemon) Run() error {
-	defer func() {
-		if err := recover(); err != nil {
-			log.Println("recovered from panic in Run():", err)
-		}
-	}()
+	ch := make(chan os.Signal)
+	signal.Notify(ch)
+	go d.handleSignals(ch)
 	go d.scheduleWorkForever()
 	go d.doWorkForever()
+	select {}
 	return nil
+}
+
+func (d *CrawlDaemon) handleSignals(ch <-chan os.Signal) {
+	for s := range ch {
+		if s == syscall.SIGINT || s == syscall.SIGTERM {
+			log.Printf("caught signal %s, exiting\n", s)
+			d.stopWorker <- true
+			d.stopScheduler <- true
+			d.exit(1)
+		} else {
+			log.Printf("caught signal %s, ignoring\n", s)
+		}
+	}
 }
 
 func (d *CrawlDaemon) scheduleWorkForever() {
 	for {
 		select {
-		case <-d.stop:
+		case <-d.stopScheduler:
+			log.Println("stopping scheduler")
 			return
 		case <-time.After(time.Duration(d.config.ScheduleIntervalSecs) * time.Second):
 			if err := d.scheduleWorkOnce(); err != nil {
@@ -117,7 +141,8 @@ func (d *CrawlDaemon) scheduleWorkOnce() error {
 func (d *CrawlDaemon) doWorkForever() {
 	for {
 		select {
-		case <-d.stop:
+		case <-d.stopWorker:
+			log.Println("stopping worker")
 			return
 		case <-time.After(time.Duration(d.config.WorkPollIntervalSecs) * time.Second):
 			item, err := d.getWorkOnce()
