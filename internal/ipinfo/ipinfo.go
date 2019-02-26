@@ -37,6 +37,12 @@ func NewIPInfoer(refreshSecs, fetchTimeoutSecs int) (IPInfoer, error) {
 	return newIPInfoer(freegeoip.OpenURL, refreshSecs, fetchTimeoutSecs)
 }
 
+func NewDummyIPInfoer() IPInfoer {
+	return &ipInfoer{
+		geoIP: &DummyLookuper{},
+	}
+}
+
 func newIPInfoer(openURL urlOpener, refreshSecs, fetchTimeoutSecs int) (IPInfoer, error) {
 	geoIPRefresh := time.Duration(refreshSecs) * time.Second
 	geoIPFetchTimeout := time.Duration(fetchTimeoutSecs) * time.Second

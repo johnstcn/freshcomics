@@ -62,10 +62,12 @@ func NewPGStore(dsn string) (Store, error) {
 	}
 	log.Info("Connected to database")
 
-	ip, err := ipinfo.NewIPInfoer(86400, 5)
-	if err != nil {
-		return nil, err
-	}
+	// ip, err := ipinfo.NewIPInfoer(86400, 5)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	ip := ipinfo.NewDummyIPInfoer()
 
 	return &pgStore{db: db, geoIP: ip}, nil
 }
