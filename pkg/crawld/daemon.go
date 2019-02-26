@@ -153,13 +153,17 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) {
 	// TODO(cian): implement me
 	var seen int
 	var crawlErr error
+	var currPage = ci.URL
+
 	if err := d.crawlInfos.StartCrawlInfo(ci.ID); err != nil {
 		log.Printf("marking crawl %d started: %v\n", ci.ID, err)
+	} else {
+		log.Printf("starting crawl %d page %s", ci.ID, currPage)
 	}
 
 	defer func() {
 		if crawlErr != nil {
-			log.Printf("crawl %d error: %v\n", ci.ID, crawlErr)
+			log.Printf("crawl %d error on page: %s: %v\n", ci.ID, currPage, crawlErr)
 		}
 
 		if err := d.crawlInfos.EndCrawlInfo(ci.ID, crawlErr, seen); err != nil {
@@ -175,7 +179,7 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) {
 
 	crawlJob := crawl.Job{
 		Request: crawl.Request{
-			URL:     ci.URL,
+			URL:     currPage,
 			Method:  http.MethodGet,
 			Headers: map[string]string{"User-Agent": d.config.UserAgent},
 			Body:    "",
@@ -226,35 +230,66 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) {
 	}
 
 	newRef := refResult.Values[0]
-	newURL := fmt.Sprintf(def.URLTemplate, newRef)
+	currPage = fmt.Sprintf(def.URLTemplate, newRef)
 
-	titleResult, found := result["title"]
-	if !found {
-		crawlErr = errors.New("no output for title rule")
-		return
-	}
+	crawlJob.Request.URL = currPage
 
-	if titleResult.Error != "" {
-		crawlErr = errors.New(titleResult.Error)
-		return
-	}
+	for {
+		result, crawlErr = d.crawler.Crawl(crawlJob)
+		if crawlErr != nil {
+			return
+		}
 
-	if len(titleResult.Values) < 1 {
-		crawlErr = errors.New("no matches for title Xpath")
-		return
-	}
+		titleResult, found := result["title"]
+		if !found {
+			crawlErr = errors.New("no output for title rule")
+			return
+		}
 
-	newTitle := titleResult.Values[0]
+		if titleResult.Error != "" {
+			crawlErr = errors.New(titleResult.Error)
+			return
+		}
 
-	newUpdate := store.SiteUpdate{
-		SiteDefID: ci.SiteDefID,
-		URL:       newURL,
-		Ref:       newRef,
-		Title:     newTitle,
-		SeenAt:    d.now(),
-	}
+		if len(titleResult.Values) < 1 {
+			crawlErr = errors.New("no matches for title Xpath")
+			return
+		}
 
-	if _, err := d.siteUpdates.CreateSiteUpdate(newUpdate); err != nil {
-		log.Printf("failed to persist site update for crawl %d: %+v\n", ci.ID, newUpdate)
+		newTitle := titleResult.Values[0]
+
+		newUpdate := store.SiteUpdate{
+			SiteDefID: ci.SiteDefID,
+			URL:       currPage,
+			Ref:       newRef,
+			Title:     newTitle,
+			SeenAt:    d.now(),
+		}
+
+		if _, err := d.siteUpdates.CreateSiteUpdate(newUpdate); err != nil {
+			log.Printf("failed to persist site update for crawl %d: %+v\n", ci.ID, newUpdate)
+			return
+		} else {
+			seen += 1
+		}
+
+		refResult, found := result["ref"]
+		if !found {
+			crawlErr = errors.New("no output for ref rule")
+			return
+		}
+
+		if refResult.Error != "" {
+			crawlErr = errors.New(refResult.Error)
+			return
+		}
+
+		if len(refResult.Values) < 1 {
+			crawlErr = errors.New("no matches for ref Xpath")
+			return
+		}
+
+		newRef = refResult.Values[0]
+		currPage = fmt.Sprintf(def.URLTemplate, newRef)
 	}
 }
