@@ -119,11 +119,18 @@ func (d *CrawlDaemon) scheduleWorkOnce() error {
 		}
 
 		var shouldSchedule bool
+		var lastURL string
 		if len(crawls) == 0 {
 			shouldSchedule = true
+			lastURL = def.StartURL
 		} else {
 			nextScheduleTime := crawls[0].EndedAt.Add(time.Duration(d.config.CheckIntervalSecs) * time.Second)
 			shouldSchedule = nextScheduleTime.After(d.now())
+			lastURL, err = d.siteDefs.GetLastURL(def.ID)
+			if err != nil {
+				logWithID.Error("fetching last URL for site def")
+				continue
+			}
 		}
 
 		if !shouldSchedule {
@@ -131,11 +138,7 @@ func (d *CrawlDaemon) scheduleWorkOnce() error {
 			continue
 		}
 
-		lastURL, err := d.siteDefs.GetLastURL(def.ID)
-		if err != nil {
-			logWithID.Error("fetching last URL for site def")
-			continue
-		}
+
 		if _, err := d.crawlInfos.CreateCrawlInfo(def.ID, lastURL); err != nil {
 			logWithID.Error("scheduling work for site def")
 		}
