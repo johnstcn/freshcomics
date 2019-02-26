@@ -49,6 +49,7 @@ type SiteUpdate struct {
 	SeenAt    time.Time    `db:"seen_at"`
 }
 
+// TODO(cian): Use NullTime
 type CrawlInfo struct {
 	ID        CrawlInfoID `db:"id"`
 	SiteDefID SiteDefID   `db:"site_def_id"`
