@@ -1,4 +1,4 @@
-INSERT INTO freshcomicsdb.site_defs (
+INSERT INTO site_defs (
   name,
   active,
   nsfw,
