@@ -16,14 +16,14 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/oschwald/maxminddb-golang v1.2.0 // indirect
 	github.com/pkg/errors v0.8.0
-	github.com/stretchr/testify v1.2.1
+	github.com/sirupsen/logrus v1.3.0 // indirect
+	github.com/stretchr/testify v1.2.2
 	github.com/tdewolff/buffer v1.1.0 // indirect
 	github.com/tdewolff/minify v2.2.0+incompatible
 	github.com/tdewolff/parse v2.2.0+incompatible // indirect
 	github.com/tdewolff/strconv v1.0.0 // indirect
 	github.com/tdewolff/test v1.0.0 // indirect
 	golang.org/x/net v0.0.0-20180724234803-3673e40ba225
-	golang.org/x/sys v0.0.0-20171028101351-661970f62f58 // indirect
 	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect

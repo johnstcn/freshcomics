@@ -2,7 +2,6 @@ package crawld
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,8 +10,8 @@ import (
 
 	"github.com/johnstcn/freshcomics/internal/store"
 	"github.com/johnstcn/gocrawl/pkg/crawl"
-
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var errNoPendingWork = errors.New("no pending work")
@@ -65,12 +64,12 @@ func (d *CrawlDaemon) Run() error {
 func (d *CrawlDaemon) handleSignals(ch <-chan os.Signal) {
 	for s := range ch {
 		if s == syscall.SIGINT || s == syscall.SIGTERM {
-			log.Printf("caught signal %s, exiting\n", s)
+			log.WithField("signal", s).Error("exiting on signal")
 			d.stopWorker <- true
 			d.stopScheduler <- true
 			d.exit(1)
 		} else {
-			log.Printf("caught signal %s, ignoring\n", s)
+			log.WithField("signal", s).Info("ignoring signal")
 		}
 	}
 }
@@ -79,7 +78,7 @@ func (d *CrawlDaemon) scheduleWorkForever() {
 	for {
 		select {
 		case <-d.stopScheduler:
-			log.Println("stopping scheduler")
+			log.Error("stopping scheduler")
 			return
 		case <-time.After(time.Duration(d.config.ScheduleIntervalSecs) * time.Second):
 			if err := d.scheduleWorkOnce(); err != nil {
@@ -103,18 +102,19 @@ func (d *CrawlDaemon) scheduleWorkOnce() error {
 
 	defs, err := d.siteDefs.GetSiteDefs(false)
 	if err != nil {
-		return errors.Wrap(err, "fetching active sitedefs")
+		return errors.Wrap(err, "fetching active site_defs")
 	}
 
 	for _, def := range defs {
+		logWithID := log.WithField("site_def_id", def.ID)
 		if _, found := pendingIDs[def.ID]; found {
-			log.Println("pending work already exists for site def: ", def.ID)
+			logWithID.Debug("pending work already exists")
 			continue
 		}
 
 		crawls, err := d.crawlInfos.GetCrawlInfo(def.ID)
 		if err != nil {
-			log.Println("fetching previous crawls for site def: ", def.ID)
+			logWithID.Error("fetching previous crawls")
 			continue
 		}
 
@@ -127,16 +127,17 @@ func (d *CrawlDaemon) scheduleWorkOnce() error {
 		}
 
 		if !shouldSchedule {
+			logWithID.Debug("skipping scheduling")
 			continue
 		}
 
 		lastURL, err := d.siteDefs.GetLastURL(def.ID)
 		if err != nil {
-			log.Println("fetching last URL for site def: ", def.ID)
+			logWithID.Error("fetching last URL for site def")
 			continue
 		}
 		if _, err := d.crawlInfos.CreateCrawlInfo(def.ID, lastURL); err != nil {
-			log.Println("scheduling work for site def: ", def.ID)
+			logWithID.Error("scheduling work for site def")
 		}
 	}
 
@@ -147,21 +148,23 @@ func (d *CrawlDaemon) doWorkForever() {
 	for {
 		select {
 		case <-d.stopWorker:
-			log.Println("stopping worker")
+			log.Error("stopping worker")
 			return
 		case <-time.After(time.Duration(d.config.WorkPollIntervalSecs) * time.Second):
 			item, err := d.getWorkOnce()
 			if err == errNoPendingWork {
-				log.Println(err)
+				log.Debug(err)
 				continue
 			}
 			if err != nil {
-				log.Println("error fetching pending work:", err)
+				log.WithError(err).Error("fetching pending work")
 				continue
 			}
 
-			log.Println("got work:", item)
-			d.doWorkOnce(item)
+			log.WithField("work", item).Debug("got work")
+			if err := d.doWorkOnce(item); err != nil {
+				log.WithError(err).WithField("work", item).Error("doing work")
+			}
 		}
 	}
 }
@@ -179,32 +182,33 @@ func (d *CrawlDaemon) getWorkOnce() (*store.CrawlInfo, error) {
 	return &pending[0], nil
 }
 
-func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) {
+func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) error {
 	// TODO(cian): implement me
 	var seen int
 	var crawlErr error
 	var currPage = ci.URL
 
+	logWithID := log.WithField("crawl_id", ci.ID)
+
 	if err := d.crawlInfos.StartCrawlInfo(ci.ID); err != nil {
-		log.Printf("marking crawl %d started: %v\n", ci.ID, err)
+		logWithID.WithError(err).Error("marking crawl started")
 	} else {
-		log.Printf("starting crawl %d page %s", ci.ID, currPage)
+		logWithID.WithField("current_page", currPage).Debug("starting crawl")
 	}
 
 	defer func() {
 		if crawlErr != nil {
-			log.Printf("crawl %d error on page: %s: %v\n", ci.ID, currPage, crawlErr)
+			logWithID.WithField("current_page", currPage).WithError(crawlErr).Info("crawl error")
 		}
 
 		if err := d.crawlInfos.EndCrawlInfo(ci.ID, crawlErr, seen); err != nil {
-			log.Printf("marking crawl %d completed: %v\n", ci.ID, err)
+			logWithID.WithError(err).Error("marking crawl completed)")
 		}
 	}()
 
 	def, err := d.siteDefs.GetSiteDef(ci.SiteDefID)
 	if err != nil {
-		log.Println("fetching sitedef", ci.SiteDefID, err)
-		return
+		return errors.Wrap(err, "fetching site def")
 	}
 
 	crawlJob := crawl.Job{
@@ -240,23 +244,23 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) {
 
 	result, crawlErr := d.crawler.Crawl(crawlJob)
 	if crawlErr != nil {
-		return
+		return errors.Wrap(crawlErr, "fetching page")
 	}
 
 	refResult, found := result["ref"]
 	if !found {
 		crawlErr = errors.New("no output for ref rule")
-		return
+		return nil
 	}
 
 	if refResult.Error != "" {
 		crawlErr = errors.New(refResult.Error)
-		return
+		return nil
 	}
 
 	if len(refResult.Values) < 1 {
 		crawlErr = errors.New("no matches for ref Xpath")
-		return
+		return nil
 	}
 
 	newRef := refResult.Values[0]
@@ -267,23 +271,23 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) {
 	for {
 		result, crawlErr = d.crawler.Crawl(crawlJob)
 		if crawlErr != nil {
-			return
+			return errors.Wrap(crawlErr, "fetching next page")
 		}
 
 		titleResult, found := result["title"]
 		if !found {
 			crawlErr = errors.New("no output for title rule")
-			return
+			return nil
 		}
 
 		if titleResult.Error != "" {
 			crawlErr = errors.New(titleResult.Error)
-			return
+			return nil
 		}
 
 		if len(titleResult.Values) < 1 {
 			crawlErr = errors.New("no matches for title Xpath")
-			return
+			return nil
 		}
 
 		newTitle := titleResult.Values[0]
@@ -297,8 +301,8 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) {
 		}
 
 		if _, err := d.siteUpdates.CreateSiteUpdate(newUpdate); err != nil {
-			log.Printf("failed to persist site update for crawl %d: %+v\n", ci.ID, newUpdate)
-			return
+			logWithID.WithError(err).Error("persisting site update")
+			return err
 		} else {
 			seen += 1
 		}
@@ -306,17 +310,17 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) {
 		refResult, found := result["ref"]
 		if !found {
 			crawlErr = errors.New("no output for ref rule")
-			return
+			return nil
 		}
 
 		if refResult.Error != "" {
 			crawlErr = errors.New(refResult.Error)
-			return
+			return nil
 		}
 
 		if len(refResult.Values) < 1 {
 			crawlErr = errors.New("no matches for ref Xpath")
-			return
+			return nil
 		}
 
 		newRef = refResult.Values[0]
