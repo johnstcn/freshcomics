@@ -9,6 +9,12 @@ import (
 )
 
 func main() {
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+	})
+	log.SetReportCaller(true)
+
 	cfg, err := crawld.NewConfig()
 	if err != nil {
 		log.WithError(err).Fatal("init crawld config")
