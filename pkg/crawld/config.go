@@ -11,6 +11,7 @@ type Config struct {
 	CheckIntervalSecs    int    `default:"3600"`
 	WorkPollIntervalSecs int    `default:"10"`
 	ScheduleIntervalSecs int    `default:"60"`
+	LogCallerTrace       bool   `default:"false"`
 }
 
 func NewConfig() (Config, error) {

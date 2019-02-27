@@ -13,12 +13,12 @@ func main() {
 		DisableColors: true,
 		FullTimestamp: true,
 	})
-	log.SetReportCaller(true)
 
 	cfg, err := crawld.NewConfig()
 	if err != nil {
 		log.WithError(err).Fatal("init crawld config")
 	}
+	log.SetReportCaller(cfg.LogCallerTrace)
 
 	conn, err := sqlx.Connect("postgres", cfg.DSN)
 	if err != nil {
