@@ -16,14 +16,11 @@ import (
 
 var errNoPendingWork = errors.New("no pending work")
 
-func New(cfg Config) (*CrawlDaemon, error) {
+func New(cfg Config, store store.Store) (*CrawlDaemon, error) {
 	opts := crawl.CrawlerOpts{
 		Timeout: time.Duration(cfg.FetchTimeoutSecs) * time.Second,
 	}
-	pgstore, err := store.NewPGStore(cfg.DSN)
-	if err != nil {
-		return nil, err
-	}
+
 	stopScheduler := make(chan bool)
 	stopWorker := make(chan bool)
 	return &CrawlDaemon{
@@ -33,9 +30,9 @@ func New(cfg Config) (*CrawlDaemon, error) {
 		exit:          os.Exit,
 		crawler:       crawl.New(opts),
 		config:        cfg,
-		siteDefs:      pgstore,
-		siteUpdates:   pgstore,
-		crawlInfos:    pgstore,
+		siteDefs:      store,
+		siteUpdates:   store,
+		crawlInfos:    store,
 	}, nil
 }
 
@@ -137,7 +134,6 @@ func (d *CrawlDaemon) scheduleWorkOnce() error {
 			logWithID.Debug("skipping scheduling")
 			continue
 		}
-
 
 		if _, err := d.crawlInfos.CreateCrawlInfo(def.ID, lastURL); err != nil {
 			logWithID.Error("scheduling work for site def")

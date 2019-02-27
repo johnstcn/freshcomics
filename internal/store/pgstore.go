@@ -4,36 +4,32 @@ import (
 	"database/sql"
 	"fmt"
 	"net"
-	"time"
 
-	"github.com/johnstcn/freshcomics/internal/common/log"
 	"github.com/johnstcn/freshcomics/internal/ipinfo"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
-
 	_ "github.com/lib/pq"
 )
 
 const (
-	sqlGetComics             string = `SELECT site_defs.name, site_defs.nsfw, site_updates.id, site_updates.title, site_updates.seen_at FROM site_updates JOIN site_defs ON (site_updates.site_def_id = site_defs.id) WHERE site_updates.id IN (SELECT DISTINCT ON (site_def_id) id FROM site_updates ORDER BY site_def_id, seen_at DESC) ORDER BY seen_at desc;`
-	sqlCreateSiteDef         string = `INSERT INTO site_defs (name, active, nsfw, start_url, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;`
-	sqlRedirect              string = `SELECT site_updates.url FROM site_updates WHERE id = $1`
-	sqlSaveClick             string = `INSERT INTO "comic_clicks" (update_id, country, region, city) VALUES ($1, $2, $3, $4);`
-	sqlGetSiteDefs           string = `SELECT id, name, active, nsfw, start_url, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs ORDER BY name ASC;`
-	sqlGetActiveSiteDefs     string = `SELECT id, name, active, nsfw, start_url, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE active = TRUE ORDER BY NAME ASC;`
-	sqlGetSiteDef            string = `SELECT id, name, active, nsfw, start_url, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE id = $1;`
-	sqlUpdateSiteDef         string = `UPDATE site_defs SET (name, active, nsfw, start_url, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id = $11;`
-	sqlCreateSiteUpdate      string = `INSERT INTO site_updates (site_def_id, ref, url, title, seen_at) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
-	sqlGetSiteUpdates        string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
-	sqlGetSiteUpdate         string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
-	sqlGetLastURL            string = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
-	sqlGetCrawlInfos         string = `SELECT id, site_def_id, url, created_at, started_at, ended_at, error, seen FROM crawl_infos ORDER BY created_at DESC;`
-	sqlGetCrawlInfo          string = `SELECT id, site_def_id, url, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE site_def_id = $1 ORDER BY created_at DESC;`
-	sqlGetPendingCrawlInfos  string = `SELECT id, site_def_id, url, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE started_at IS NULL AND ended_at IS NULL ORDER BY created_at ASC;`
-	sqlCreateCrawlInfo       string = `INSERT INTO crawl_infos (site_def_id, url) VALUES ($1, $2) RETURNING ID;`
-	sqlStartCrawlInfo        string = `UPDATE crawl_infos SET started_at = CURRENT_TIMESTAMP WHERE id = $1;`
-	sqlEndCrawlInfo          string = `UPDATE crawl_infos SET (ended_at, error, seen) VALUES (CURRENT_TIMESTAMP, $2, $3) WHERE id = $1;`
+	sqlGetComics            string = `SELECT site_defs.name, site_defs.nsfw, site_updates.id, site_updates.title, site_updates.seen_at FROM site_updates JOIN site_defs ON (site_updates.site_def_id = site_defs.id) WHERE site_updates.id IN (SELECT DISTINCT ON (site_def_id) id FROM site_updates ORDER BY site_def_id, seen_at DESC) ORDER BY seen_at desc;`
+	sqlCreateSiteDef        string = `INSERT INTO site_defs (name, active, nsfw, start_url, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;`
+	sqlRedirect             string = `SELECT site_updates.url FROM site_updates WHERE id = $1`
+	sqlSaveClick            string = `INSERT INTO "comic_clicks" (update_id, country, region, city) VALUES ($1, $2, $3, $4);`
+	sqlGetSiteDefs          string = `SELECT id, name, active, nsfw, start_url, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs ORDER BY name ASC;`
+	sqlGetActiveSiteDefs    string = `SELECT id, name, active, nsfw, start_url, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE active = TRUE ORDER BY NAME ASC;`
+	sqlGetSiteDef           string = `SELECT id, name, active, nsfw, start_url, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp FROM site_defs WHERE id = $1;`
+	sqlUpdateSiteDef        string = `UPDATE site_defs SET (name, active, nsfw, start_url, url_template, ref_xpath, ref_regexp, title_xpath, title_regexp) = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE id = $11;`
+	sqlCreateSiteUpdate     string = `INSERT INTO site_updates (site_def_id, ref, url, title, seen_at) VALUES ($1, $2, $3, $4, $5) RETURNING id;`
+	sqlGetSiteUpdates       string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC;`
+	sqlGetSiteUpdate        string = `SELECT id, site_def_id, ref, url, title, seen_at FROM site_updates WHERE site_def_id = $1 AND ref = $2;`
+	sqlGetLastURL           string = `SELECT url FROM site_updates WHERE site_def_id = $1 ORDER BY seen_at DESC LIMIT 1;`
+	sqlGetCrawlInfos        string = `SELECT id, site_def_id, url, created_at, started_at, ended_at, error, seen FROM crawl_infos ORDER BY created_at DESC;`
+	sqlGetCrawlInfo         string = `SELECT id, site_def_id, url, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE site_def_id = $1 ORDER BY created_at DESC;`
+	sqlGetPendingCrawlInfos string = `SELECT id, site_def_id, url, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE started_at IS NULL AND ended_at IS NULL ORDER BY created_at ASC;`
+	sqlCreateCrawlInfo      string = `INSERT INTO crawl_infos (site_def_id, url) VALUES ($1, $2) RETURNING ID;`
+	sqlStartCrawlInfo       string = `UPDATE crawl_infos SET started_at = CURRENT_TIMESTAMP WHERE id = $1;`
+	sqlEndCrawlInfo         string = `UPDATE crawl_infos SET (ended_at, error, seen) VALUES (CURRENT_TIMESTAMP, $2, $3) WHERE id = $1;`
 )
 
 type pgStore struct {
@@ -47,29 +43,10 @@ var _ SiteDefStore = (*pgStore)(nil)
 var _ SiteUpdateStore = (*pgStore)(nil)
 var _ CrawlInfoStore = (*pgStore)(nil)
 
-func NewPGStore(dsn string) (Store, error) {
-	var db Conn
-	var err error
-	for {
-		db, err = sqlx.Connect("postgres", dsn)
-		if err != nil {
-			log.Info(errors.Wrapf(err, "could not connect to database"))
-			<-time.After(1 * time.Second)
-			continue
-		}
-		log.Info("Connected to database")
-		break
-	}
-	log.Info("Connected to database")
-
-	// ip, err := ipinfo.NewIPInfoer(86400, 5)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
+func NewPGStore(conn *sqlx.DB) (Store, error) {
 	ip := ipinfo.NewDummyIPInfoer()
 
-	return &pgStore{db: db, geoIP: ip}, nil
+	return &pgStore{db: conn, geoIP: ip}, nil
 }
 
 // GetComics implements ComicStore.GetComics
