@@ -29,7 +29,7 @@ const (
 	sqlGetPendingCrawlInfos string = `SELECT id, site_def_id, url, created_at, started_at, ended_at, error, seen FROM crawl_infos WHERE started_at IS NULL AND ended_at IS NULL ORDER BY created_at ASC;`
 	sqlCreateCrawlInfo      string = `INSERT INTO crawl_infos (site_def_id, url) VALUES ($1, $2) RETURNING ID;`
 	sqlStartCrawlInfo       string = `UPDATE crawl_infos SET started_at = CURRENT_TIMESTAMP WHERE id = $1;`
-	sqlEndCrawlInfo         string = `UPDATE crawl_infos SET (ended_at, error, seen) VALUES (CURRENT_TIMESTAMP, $2, $3) WHERE id = $1;`
+	sqlEndCrawlInfo         string = `UPDATE crawl_infos SET (ended_at, error, seen) = (CURRENT_TIMESTAMP, $2, $3) WHERE id = $1;`
 )
 
 type pgStore struct {
