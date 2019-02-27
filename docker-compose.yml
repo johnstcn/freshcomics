@@ -28,6 +28,7 @@ services:
       - CRAWLD_SCHEDULEINTERVALSECS=60
     depends_on:
       - db
+    restart: always
     networks:
       - freshcomics-network
 
