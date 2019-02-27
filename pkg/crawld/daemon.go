@@ -115,23 +115,13 @@ func (d *CrawlDaemon) scheduleWorkOnce() error {
 			continue
 		}
 
-		var shouldSchedule bool
-		var lastURL string
-		if len(crawls) == 0 {
-			shouldSchedule = true
-			lastURL = def.StartURL
-		} else {
-			nextScheduleTime := crawls[0].EndedAt.Add(time.Duration(d.config.CheckIntervalSecs) * time.Second)
-			shouldSchedule = nextScheduleTime.After(d.now())
-			lastURL, err = d.siteDefs.GetLastURL(def.ID)
-			if err != nil {
-				logWithID.Error("fetching last URL for site def")
-				continue
-			}
+		lastURL, err := d.getLastURL(def, crawls)
+		if err != nil {
+			logWithID.Debug("skipping scheduling")
+			logWithID.WithError(err).Error("fetch last URL")
 		}
 
-		if !shouldSchedule {
-			logWithID.Debug("skipping scheduling")
+		if !d.shouldSchedule(def, crawls) {
 			continue
 		}
 
@@ -141,6 +131,28 @@ func (d *CrawlDaemon) scheduleWorkOnce() error {
 	}
 
 	return nil
+}
+
+func (d *CrawlDaemon) getLastURL(def store.SiteDef, crawls []store.CrawlInfo) (string, error) {
+	if len(crawls) == 0 {
+		return def.StartURL, nil
+	}
+	return crawls[0].URL, nil
+}
+
+func (d *CrawlDaemon) shouldSchedule(def store.SiteDef, crawls []store.CrawlInfo) bool {
+	if len(crawls) == 0 {
+		return true
+	}
+
+	lastCrawl := crawls[0]
+	if !lastCrawl.EndedAt.Valid {
+		return false
+	}
+
+	lastCrawlTime := lastCrawl.EndedAt.Time
+	nextScheduleTime := lastCrawlTime.Add(time.Duration(d.config.CheckIntervalSecs) * time.Second)
+	return nextScheduleTime.After(d.now())
 }
 
 func (d *CrawlDaemon) doWorkForever() {

@@ -2,6 +2,8 @@ package store
 
 import (
 	"time"
+
+	"github.com/lib/pq"
 )
 
 type ComicID int64
@@ -28,16 +30,16 @@ type ClickLog struct {
 }
 
 type SiteDef struct {
-	ID            SiteDefID `db:"id"`
-	Name          string    `db:"name"`
-	Active        bool      `db:"active"`
-	NSFW          bool      `db:"nsfw"`
-	StartURL      string    `db:"start_url"`
-	URLTemplate   string    `db:"url_template"`
-	RefXpath      string    `db:"ref_xpath"`
-	RefRegexp     string    `db:"ref_regexp"`
-	TitleXpath    string    `db:"title_xpath"`
-	TitleRegexp   string    `db:"title_regexp"`
+	ID          SiteDefID `db:"id"`
+	Name        string    `db:"name"`
+	Active      bool      `db:"active"`
+	NSFW        bool      `db:"nsfw"`
+	StartURL    string    `db:"start_url"`
+	URLTemplate string    `db:"url_template"`
+	RefXpath    string    `db:"ref_xpath"`
+	RefRegexp   string    `db:"ref_regexp"`
+	TitleXpath  string    `db:"title_xpath"`
+	TitleRegexp string    `db:"title_regexp"`
 }
 
 type SiteUpdate struct {
@@ -49,14 +51,13 @@ type SiteUpdate struct {
 	SeenAt    time.Time    `db:"seen_at"`
 }
 
-// TODO(cian): Use NullTime
 type CrawlInfo struct {
 	ID        CrawlInfoID `db:"id"`
 	SiteDefID SiteDefID   `db:"site_def_id"`
 	URL       string      `db:"url"`
 	CreatedAt time.Time   `db:"created_at"`
-	StartedAt time.Time   `db:"started_at"`
-	EndedAt   time.Time   `db:"ended_at"`
+	StartedAt pq.NullTime `db:"started_at"`
+	EndedAt   pq.NullTime `db:"ended_at"`
 	Error     string      `db:"error"`
 	Seen      int         `db:"seen"`
 }
