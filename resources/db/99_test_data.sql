@@ -16,6 +16,6 @@ INSERT INTO site_defs (
   'http://grannyfairies.com/%s.html',
   '//p[@class="nav"]/a[@class="on"]/@href',
   '([^/]+)\.html$',
-  '//img[@class="comic"][@alt]/@alt',
+  '//img[@class="comic"]/@alt',
   '(.+)'
 );
