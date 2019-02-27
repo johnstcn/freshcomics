@@ -235,7 +235,7 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) error {
 				XPath: def.RefXpath,
 				Filters: []crawl.Filter{
 					{
-						Find:    def.RefXpath,
+						Find:    def.RefRegexp,
 						Replace: "$1",
 					},
 				},
