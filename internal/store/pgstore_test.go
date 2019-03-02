@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lib/pq"
+
 	"github.com/johnstcn/freshcomics/internal/ipinfo"
 	"github.com/johnstcn/freshcomics/internal/ipinfo/ipinfotest"
 
@@ -17,29 +19,29 @@ import (
 )
 
 var testSiteDefA = SiteDef{
-	ID:            SiteDefID(1),
-	Name:          "Test Name",
-	Active:        true,
-	NSFW:          true,
-	StartURL:      "Test Start URL",
-	URLTemplate:   "Test Template",
-	RefXpath:      "Test Ref XPath",
-	RefRegexp:     "Test Ref Regexp",
-	TitleXpath:    "Test Title XPath",
-	TitleRegexp:   "Test Title Regexp",
+	ID:          SiteDefID(1),
+	Name:        "Test Name",
+	Active:      true,
+	NSFW:        true,
+	StartURL:    "Test Start URL",
+	URLTemplate: "Test Template",
+	RefXpath:    "Test Ref XPath",
+	RefRegexp:   "Test Ref Regexp",
+	TitleXpath:  "Test Title XPath",
+	TitleRegexp: "Test Title Regexp",
 }
 
 var testSiteDefB = SiteDef{
-	ID:            SiteDefID(2),
-	Name:          "Test Name Other",
-	Active:        false,
-	NSFW:          false,
-	StartURL:      "Test Start URL Other",
-	URLTemplate:   "Test Template Other",
-	RefXpath:      "Test Ref XPath Other",
-	RefRegexp:     "Test Ref Regexp Other",
-	TitleXpath:    "Test Title XPath Other",
-	TitleRegexp:   "Test Title Regexp Other",
+	ID:          SiteDefID(2),
+	Name:        "Test Name Other",
+	Active:      false,
+	NSFW:        false,
+	StartURL:    "Test Start URL Other",
+	URLTemplate: "Test Template Other",
+	RefXpath:    "Test Ref XPath Other",
+	RefRegexp:   "Test Ref Regexp Other",
+	TitleXpath:  "Test Title XPath Other",
+	TitleRegexp: "Test Title Regexp Other",
 }
 
 var testSiteUpdateA = SiteUpdate{
@@ -55,10 +57,16 @@ var testCrawlInfoA = CrawlInfo{
 	ID:        CrawlInfoID(1),
 	SiteDefID: SiteDefID(1),
 	URL:       "http://example.com",
-	StartedAt: time.Unix(0, 0),
-	EndedAt:   time.Unix(1, 0),
-	Seen:      1,
-	Error:     "",
+	StartedAt: pq.NullTime{
+		Time:  time.Unix(0, 0).UTC(),
+		Valid: true,
+	},
+	EndedAt: pq.NullTime{
+		Time:  time.Unix(1, 0).UTC(),
+		Valid: true,
+	},
+	Seen:  1,
+	Error: "",
 }
 
 var testError = fmt.Errorf("some error")
@@ -395,7 +403,7 @@ func (s *PGStoreTestSuite) TestGetLastURL_ErrQuery() {
 
 func (s *PGStoreTestSuite) TestGetCrawlInfos_OK() {
 	rows := sqlmock.NewRows([]string{"id", "site_def_id", "url", "started_at", "ended_at", "error", "seen"})
-	rows.AddRow(testCrawlInfoA.ID, testCrawlInfoA.SiteDefID, testCrawlInfoA.URL, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Error, testCrawlInfoA.Seen)
+	rows.AddRow(testCrawlInfoA.ID, testCrawlInfoA.SiteDefID, testCrawlInfoA.URL, testCrawlInfoA.StartedAt.Time, testCrawlInfoA.EndedAt.Time, testCrawlInfoA.Error, testCrawlInfoA.Seen)
 	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetCrawlInfos)).WillReturnRows(rows)
 	ci, err := s.store.GetCrawlInfos()
 	s.NoError(err)
@@ -412,7 +420,7 @@ func (s *PGStoreTestSuite) TestGetCrawlInfos_ErrQuery() {
 
 func (s *PGStoreTestSuite) TestGetCrawlInfo_OK() {
 	rows := sqlmock.NewRows([]string{"id", "site_def_id", "url", "started_at", "ended_at", "error", "seen"})
-	rows.AddRow(testCrawlInfoA.ID, testCrawlInfoA.SiteDefID, testCrawlInfoA.URL, testCrawlInfoA.StartedAt, testCrawlInfoA.EndedAt, testCrawlInfoA.Error, testCrawlInfoA.Seen)
+	rows.AddRow(testCrawlInfoA.ID, testCrawlInfoA.SiteDefID, testCrawlInfoA.URL, testCrawlInfoA.StartedAt.Time, testCrawlInfoA.EndedAt.Time, testCrawlInfoA.Error, testCrawlInfoA.Seen)
 	s.mdb.ExpectQuery(regexp.QuoteMeta(sqlGetCrawlInfo)).WillReturnRows(rows)
 	ci, err := s.store.GetCrawlInfo(1)
 	s.NoError(err)
