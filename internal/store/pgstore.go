@@ -189,6 +189,9 @@ func (s *pgStore) CreateSiteUpdate(su SiteUpdate) (SiteUpdateID, error) {
 			return 0, err
 		}
 	}
+	if err := rows.Close(); err != nil {
+		return 0, err
+	}
 	err = tx.Commit()
 	if err != nil {
 		return 0, err
