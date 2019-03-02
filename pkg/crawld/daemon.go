@@ -322,6 +322,7 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) error {
 			logWithID.WithError(err).Error("persisting site update")
 			return err
 		} else {
+			logWithID.WithField("update", newUpdate).Info("persisted new update")
 			seen += 1
 		}
 
