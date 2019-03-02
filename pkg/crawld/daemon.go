@@ -1,6 +1,7 @@
 package crawld
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
@@ -115,14 +116,14 @@ func (d *CrawlDaemon) scheduleWorkOnce() error {
 			continue
 		}
 
-		lastURL, err := d.getLastURL(def, crawls)
+		if !d.shouldSchedule(def, crawls) {
+			continue
+		}
+
+		lastURL, err := d.getLastURL(def)
 		if err != nil {
 			logWithID.Debug("skipping scheduling")
 			logWithID.WithError(err).Error("fetch last URL")
-		}
-
-		if !d.shouldSchedule(def, crawls) {
-			continue
 		}
 
 		if _, err := d.crawlInfos.CreateCrawlInfo(def.ID, lastURL); err != nil {
@@ -133,11 +134,17 @@ func (d *CrawlDaemon) scheduleWorkOnce() error {
 	return nil
 }
 
-func (d *CrawlDaemon) getLastURL(def store.SiteDef, crawls []store.CrawlInfo) (string, error) {
-	if len(crawls) == 0 {
+func (d *CrawlDaemon) getLastURL(def store.SiteDef) (string, error) {
+	lastURL, err := d.siteDefs.GetLastURL(def.ID)
+	if err == sql.ErrNoRows {
 		return def.StartURL, nil
 	}
-	return crawls[0].URL, nil
+
+	if err != nil {
+		return "", err
+	}
+
+	return lastURL, nil
 }
 
 func (d *CrawlDaemon) shouldSchedule(def store.SiteDef, crawls []store.CrawlInfo) bool {
