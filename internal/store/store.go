@@ -44,7 +44,7 @@ type SiteUpdateStore interface {
 	// GetSiteUpdates returns all SiteUpdates for the given SiteDefID
 	GetSiteUpdates(id SiteDefID) ([]SiteUpdate, error)
 	// GetSiteUpdate gets a single SiteUpdate from the SiteDefID and the ref
-	GetSiteUpdate(id SiteDefID, ref string) (SiteUpdate, error)
+	GetSiteUpdate(id SiteDefID, ref string) (SiteUpdate, bool, error)
 }
 
 type CrawlInfoStore interface {

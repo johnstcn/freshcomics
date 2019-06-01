@@ -16,7 +16,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/oschwald/maxminddb-golang v1.2.0 // indirect
 	github.com/pkg/errors v0.8.0
-	github.com/sirupsen/logrus v1.3.0 // indirect
+	github.com/sirupsen/logrus v1.3.0
 	github.com/stretchr/testify v1.2.2
 	github.com/tdewolff/buffer v1.1.0 // indirect
 	github.com/tdewolff/minify v2.2.0+incompatible

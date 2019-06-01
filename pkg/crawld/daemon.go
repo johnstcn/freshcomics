@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"syscall"
 	"time"
 
@@ -200,23 +201,62 @@ func (d *CrawlDaemon) getWorkOnce() (*store.CrawlInfo, error) {
 	return &pending[0], nil
 }
 
+func (d *CrawlDaemon) makeCrawlJob(def store.SiteDef, url string) crawl.Job {
+	return crawl.Job{
+		Request: crawl.Request{
+			URL:     url,
+			Method:  http.MethodGet,
+			Headers: map[string]string{"User-Agent": d.config.UserAgent},
+			Body:    "",
+		},
+		Rules: []crawl.Rule{
+			{
+				Name:  "next_page",
+				XPath: def.NextPageXPath,
+				Filters: []crawl.Filter{
+					{
+						Find:    def.RefRegexp,
+						Replace: "$1",
+					},
+				},
+			},
+			{
+				Name:  "title",
+				XPath: def.TitleXPath,
+				Filters: []crawl.Filter{
+					{
+						Find:    def.TitleRegexp,
+						Replace: "$1",
+					},
+				},
+			},
+		},
+	}
+}
+
 func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) error {
-	// TODO(cian): implement me
+	// fetch last URL
+	// loop
+	// 	 parse page
+	// 	 check if persisted
+	// 	 persist
+	// 	 check for next page result
+	//   break if no result
 	var seen int
 	var crawlErr error
-	var currPage = ci.URL
+	var currentURL = ci.URL
 
 	logWithID := log.WithField("crawl_id", ci.ID)
 
 	if err := d.crawlInfos.StartCrawlInfo(ci.ID); err != nil {
 		logWithID.WithError(err).Error("marking crawl started")
 	} else {
-		logWithID.WithField("current_page", currPage).Debug("starting crawl")
+		logWithID.WithField("current_page", currentURL).Info("starting crawl")
 	}
 
 	defer func() {
 		if crawlErr != nil {
-			logWithID.WithField("current_page", currPage).WithError(crawlErr).Info("crawl error")
+			logWithID.WithField("current_page", currentURL).WithError(crawlErr).Info("crawl error")
 		}
 
 		if err := d.crawlInfos.EndCrawlInfo(ci.ID, crawlErr, seen); err != nil {
@@ -229,67 +269,24 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) error {
 		return errors.Wrap(err, "fetching site def")
 	}
 
-	crawlJob := crawl.Job{
-		Request: crawl.Request{
-			URL:     currPage,
-			Method:  http.MethodGet,
-			Headers: map[string]string{"User-Agent": d.config.UserAgent},
-			Body:    "",
-		},
-		Rules: []crawl.Rule{
-			{
-				Name:  "ref",
-				XPath: def.RefXpath,
-				Filters: []crawl.Filter{
-					{
-						Find:    def.RefRegexp,
-						Replace: "$1",
-					},
-				},
-			},
-			{
-				Name:  "title",
-				XPath: def.TitleXpath,
-				Filters: []crawl.Filter{
-					{
-						Find:    def.TitleRegexp,
-						Replace: "$1",
-					},
-				},
-			},
-		},
-	}
-
-	result, crawlErr := d.crawler.Crawl(crawlJob)
-	if crawlErr != nil {
-		return errors.Wrap(crawlErr, "fetching page")
-	}
-
-	refResult, found := result["ref"]
-	if !found {
-		crawlErr = errors.New("no output for ref rule")
+	refExpr, err := regexp.Compile(def.RefRegexp)
+	if err != nil {
+		crawlErr = errors.Wrapf(err, "invalid ref regexp %q", def.RefRegexp)
 		return nil
 	}
-
-	if refResult.Error != "" {
-		crawlErr = errors.New(refResult.Error)
-		return nil
-	}
-
-	if len(refResult.Values) < 1 {
-		crawlErr = errors.New("no matches for ref Xpath")
-		return nil
-	}
-
-	newRef := refResult.Values[0]
-	currPage = fmt.Sprintf(def.URLTemplate, newRef)
-
-	crawlJob.Request.URL = currPage
 
 	for {
-		result, crawlErr = d.crawler.Crawl(crawlJob)
+		refResults := refExpr.FindStringSubmatch(currentURL)
+		if len(refResults) == 0 {
+			crawlErr = fmt.Errorf("no match for ref regexp")
+			return nil
+		}
+		newRef := refResults[1]
+
+		crawlJob := d.makeCrawlJob(def, currentURL)
+		result, crawlErr := d.crawler.Crawl(crawlJob)
 		if crawlErr != nil {
-			return errors.Wrap(crawlErr, "fetching next page")
+			return errors.Wrapf(crawlErr, "fetching page %q", crawlJob.Request.URL)
 		}
 
 		titleResult, found := result["title"]
@@ -303,7 +300,7 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) error {
 			return nil
 		}
 
-		if len(titleResult.Values) < 1 {
+		if len(titleResult.Values) == 0 {
 			crawlErr = errors.New("no matches for title Xpath")
 			return nil
 		}
@@ -312,13 +309,17 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) error {
 
 		newUpdate := store.SiteUpdate{
 			SiteDefID: ci.SiteDefID,
-			URL:       currPage,
+			URL:       currentURL,
 			Ref:       newRef,
 			Title:     newTitle,
 			SeenAt:    d.now(),
 		}
 
-		if _, err := d.siteUpdates.CreateSiteUpdate(newUpdate); err != nil {
+		if _, found, err := d.siteUpdates.GetSiteUpdate(ci.SiteDefID, newRef); found {
+			logWithID.WithField("ref", newRef).Info("already persisted")
+		} else if err != nil {
+			logWithID.WithError(err).Error("checking if site update already persisted")
+		} else if _, err := d.siteUpdates.CreateSiteUpdate(newUpdate); err != nil {
 			logWithID.WithError(err).Error("persisting site update")
 			return err
 		} else {
@@ -326,23 +327,23 @@ func (d *CrawlDaemon) doWorkOnce(ci *store.CrawlInfo) error {
 			seen += 1
 		}
 
-		refResult, found := result["ref"]
+		nextpageResult, found := result["next_page"]
 		if !found {
-			crawlErr = errors.New("no output for ref rule")
+			crawlErr = errors.New("no output for next page rule")
 			return nil
 		}
 
-		if refResult.Error != "" {
-			crawlErr = errors.New(refResult.Error)
+		if nextpageResult.Error != "" {
+			crawlErr = errors.New(nextpageResult.Error)
 			return nil
 		}
 
-		if len(refResult.Values) < 1 {
+		if len(nextpageResult.Values) == 0 {
 			crawlErr = errors.New("no matches for ref Xpath")
 			return nil
 		}
 
-		newRef = refResult.Values[0]
-		currPage = fmt.Sprintf(def.URLTemplate, newRef)
+		newRef = nextpageResult.Values[0]
+		currentURL = fmt.Sprintf(def.URLTemplate, newRef)
 	}
 }

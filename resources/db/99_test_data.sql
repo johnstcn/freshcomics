@@ -4,7 +4,7 @@ INSERT INTO site_defs (
   nsfw,
   start_url,
   url_template,
-  ref_xpath,
+  next_page_xpath,
   ref_regexp,
   title_xpath,
   title_regexp

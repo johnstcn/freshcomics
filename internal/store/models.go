@@ -30,16 +30,16 @@ type ClickLog struct {
 }
 
 type SiteDef struct {
-	ID          SiteDefID `db:"id"`
-	Name        string    `db:"name"`
-	Active      bool      `db:"active"`
-	NSFW        bool      `db:"nsfw"`
-	StartURL    string    `db:"start_url"`
-	URLTemplate string    `db:"url_template"`
-	RefXpath    string    `db:"ref_xpath"`
-	RefRegexp   string    `db:"ref_regexp"`
-	TitleXpath  string    `db:"title_xpath"`
-	TitleRegexp string    `db:"title_regexp"`
+	ID            SiteDefID `db:"id"`
+	Name          string    `db:"name"`
+	Active        bool      `db:"active"`
+	NSFW          bool      `db:"nsfw"`
+	StartURL      string    `db:"start_url"`
+	URLTemplate   string    `db:"url_template"`
+	NextPageXPath string    `db:"next_page_xpath"`
+	RefRegexp     string    `db:"ref_regexp"`
+	TitleXPath    string    `db:"title_xpath"`
+	TitleRegexp   string    `db:"title_regexp"`
 }
 
 type SiteUpdate struct {
