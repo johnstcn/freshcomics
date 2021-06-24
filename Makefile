@@ -15,8 +15,8 @@ help: Makefile
 
 ## docker: build docker image
 docker:
-	$(CONTAINERTOOL) build . -f Dockerfile.$(OUTPUT_BINARY_FE) -t $(OUTPUT_BINARY_FE):latest
 	$(CONTAINERTOOL) build . -f Dockerfile.$(OUTPUT_BINARY_BE) -t $(OUTPUT_BINARY_BE):latest
+	$(CONTAINERTOOL) build . -f Dockerfile.$(OUTPUT_BINARY_FE) -t $(OUTPUT_BINARY_FE):latest
 
 ## clean: clean built binary
 clean: go-clean

@@ -1,16 +1,20 @@
 version: '3'
 services:
- frontend:
-   ports:
-     - "8000:8000"
-   build:
-     context: .
-     dockerfile: Dockerfile.freshcomics
-   image: johnstcn/freshcomics:latest
-   depends_on:
-     - db
-   networks:
-     - freshcomics-network
+  frontend:
+    ports:
+      - "8000:8000"
+    build:
+      context: .
+      dockerfile: Dockerfile.freshcomics
+    image: johnstcn/freshcomics:latest
+    depends_on:
+      - db
+    environment:
+      - FRESHCOMICS_FRONTEND_DSN=host=db user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable
+      - FRESHCOMICS_FRONTEND_HOST=0.0.0.0
+      - FRESHCOMICS_FRONTEND_PORT=8000
+    networks:
+      - freshcomics-network
 
   crawld:
     ports:
@@ -18,7 +22,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.crawld
-    image: johnstcn/freshcomics-crawld:latest
+    image: johnstcn/crawld:latest
     environment:
       - CRAWLD_DSN=host=db user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable
       - CRAWLD_USERAGENT=freshcomics/crawld

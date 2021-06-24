@@ -1,6 +1,6 @@
 # Accept the Go version for the image to be set as a build argument.
-# Default to Go 1.11
-ARG GO_VERSION=1.11
+# Default to Go 1.16
+ARG GO_VERSION=1.16
 
 # First stage: build the executable.
 FROM golang:${GO_VERSION}-alpine AS builder
@@ -29,9 +29,8 @@ COPY ./ ./
 
 # Build the executable. Mark the build as statically linked.
 RUN cd ./cmd/freshcomics && \
-    CGO_ENABLED=0 go build \
-    -installsuffix 'static' \
-    -o /freshcomics .
+    CGO_ENABLED=0 go build -installsuffix 'static' -o /freshcomics . && \
+    chmod +x /freshcomics
 
 # Final stage: the running container.
 FROM scratch AS final
@@ -54,12 +53,10 @@ EXPOSE 8000
 # Perform any further action as an unprivileged user.
 USER nobody:nobody
 
-ENV FRESHCOMICS_CRAWLER_HOST 0.0.0.0
-ENV FRESHCOMICS_CRAWLER_PORT 8001
-ENV FRESHCOMICS_CRAWLER_DSN "host=db user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable"
-ENV FRESHCOMICS_CRAWLER_CHECKINTERVALSECS 60
-ENV FRESHCOMICS_CRAWLER_CRAWLDISPATCHSECS 1
-ENV FRESHCOMICS_CRAWLER_BACKOFF "1,1"
+ENV FRESHCOMICS_FRONTEND_HOST 0.0.0.0
+ENV FRESHCOMICS_FRONTEND_PORT 8000
+ENV FRESHCOMICS_FRONTEND_DSN "host=db user=freshcomics password=freshcomics_password dbname=freshcomicsdb sslmode=disable"
+
 
 # Run the compiled binary.
 ENTRYPOINT ["/freshcomics"]
