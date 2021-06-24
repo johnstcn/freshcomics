@@ -9,7 +9,7 @@ import (
 
 var (
 	debug *log.Logger
-	info *log.Logger
+	info  *log.Logger
 	error *log.Logger
 )
 

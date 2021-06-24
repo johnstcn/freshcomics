@@ -4,7 +4,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-//go:generate mockery -interface Store -package storetest
+//go:generate mockery --all
 
 type Store interface {
 	ComicStore

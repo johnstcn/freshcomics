@@ -1,6 +1,5 @@
 package log
 
-
 import (
 	"bytes"
 	"errors"

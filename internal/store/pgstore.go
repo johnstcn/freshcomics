@@ -70,8 +70,6 @@ func (s *pgStore) Redirect(id SiteUpdateID) (string, error) {
 	return result, nil
 }
 
-// ClickLogger interface methods
-
 // CreateClickLog implements ClickLogger.CreateClickLog
 func (s *pgStore) CreateClickLog(id SiteUpdateID, addr net.IP) error {
 	geoLoc, err := s.geoIP.GetIPInfo(addr)
@@ -217,7 +215,7 @@ func (s *pgStore) GetSiteUpdate(id SiteDefID, ref string) (SiteUpdate, bool, err
 	if err == sql.ErrNoRows {
 		return SiteUpdate{}, false, nil
 	} else if err != nil {
-			return SiteUpdate{}, false, err
+		return SiteUpdate{}, false, err
 	}
 	return update, true, nil
 }

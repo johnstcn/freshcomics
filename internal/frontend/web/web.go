@@ -1,38 +1,38 @@
 package web
 
 import (
-	"errors"
 	"fmt"
 	"html/template"
 	"net"
 	"net/http"
-	"strings"
 	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/gorilla/mux"
 	"github.com/tdewolff/minify"
-	"github.com/tdewolff/minify/html"
 	"github.com/tdewolff/minify/css"
+	"github.com/tdewolff/minify/html"
 
 	"github.com/johnstcn/freshcomics/internal/common/log"
-	"github.com/johnstcn/freshcomics/internal/store"
 	"github.com/johnstcn/freshcomics/internal/frontend/config"
+	"github.com/johnstcn/freshcomics/internal/store"
 )
 
 type frontend struct {
 	mux.Router
-	store store.Store
-	comics *[]store.Comic
-	tpl *template.Template
+	store  store.Store
+	comics []store.Comic
+	tpl    *template.Template
 }
 
 func NewFrontend(s store.Store) *frontend {
 	comics := make([]store.Comic, 0)
 	f := &frontend{
-		store: s,
-		comics: &comics,
+		store:  s,
+		comics: comics,
 	}
 
 	f.initTemplates()
@@ -57,8 +57,8 @@ func (f *frontend) UpdateComics() {
 }
 
 func (f *frontend) indexHandler(resp http.ResponseWriter, req *http.Request) {
-	data := struct{
-		Comics *[]store.Comic
+	data := struct {
+		Comics []store.Comic
 	}{
 		Comics: f.comics,
 	}
@@ -68,35 +68,35 @@ func (f *frontend) indexHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
+//lint:ignore U1000 TODO(cian): to be used later
 func (f *frontend) remoteIP(req *http.Request) (net.IP, error) {
 	fwdHdr := req.Header.Get("X-Forwarded-For")
 	log.Debug("X-Forwarded-For header:", fwdHdr)
 	fwdAddr := regexp.MustCompile(`^\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)`).FindString(fwdHdr)
 	addr := net.ParseIP(fwdAddr)
 	if fwdAddr == "" || addr == nil {
-		return nil, errors.New(fmt.Sprintf("unable to parse X-Forwarded-For: %s", fwdHdr))
+		return nil, fmt.Errorf("unable to parse X-Forwarded-For: %s", fwdHdr)
 	}
 	return addr, nil
 }
 
 func (f *frontend) redirectHandler(resp http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	updateId := vars["id"]
-	addr, err := f.remoteIP(req)
-	if err != nil {
-		log.Error(err)
-	} else {
-		err = f.store.RecordClick(updateId, addr)
-		if err != nil {
-			log.Error("error recording click:", err)
-		}
+	if vars["id"] == "" {
+		resp.WriteHeader(http.StatusBadRequest)
+		return
 	}
-	url, err := f.store.GetRedirectURL(updateId)
+	updateId, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	url, err := f.store.Redirect(store.SiteUpdateID(updateId))
 	if err != nil {
 		http.NotFound(resp, req)
 		return
 	}
-	http.Redirect(resp, req, url, 301)
+	http.Redirect(resp, req, url, http.StatusMovedPermanently)
 }
 
 func (f *frontend) cssHandler(resp http.ResponseWriter, req *http.Request) {

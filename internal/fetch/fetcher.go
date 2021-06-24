@@ -76,7 +76,7 @@ func (f *pageFetcher) fetchWithRetry(url string) (FetchedPage, error) {
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return FetchedPage{}, errors.Wrapf(err, "unable to create HTTP request for url %s")
+		return FetchedPage{}, errors.Wrapf(err, "unable to create HTTP request for url %s", url)
 	}
 	req.Header.Add("User-Agent", f.userAgent)
 

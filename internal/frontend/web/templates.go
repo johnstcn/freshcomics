@@ -205,8 +205,8 @@ func AssetNames() []string {
 var _bindata = map[string]func() (*asset, error){
 	"frontend_footer.gohtml": frontend_footerGohtml,
 	"frontend_header.gohtml": frontend_headerGohtml,
-	"frontend_index.gohtml": frontend_indexGohtml,
-	"style.css": styleCss,
+	"frontend_index.gohtml":  frontend_indexGohtml,
+	"style.css":              styleCss,
 }
 
 // AssetDir returns the file names below a certain
@@ -248,11 +248,12 @@ type bintree struct {
 	Func     func() (*asset, error)
 	Children map[string]*bintree
 }
+
 var _bintree = &bintree{nil, map[string]*bintree{
 	"frontend_footer.gohtml": &bintree{frontend_footerGohtml, map[string]*bintree{}},
 	"frontend_header.gohtml": &bintree{frontend_headerGohtml, map[string]*bintree{}},
-	"frontend_index.gohtml": &bintree{frontend_indexGohtml, map[string]*bintree{}},
-	"style.css": &bintree{styleCss, map[string]*bintree{}},
+	"frontend_index.gohtml":  &bintree{frontend_indexGohtml, map[string]*bintree{}},
+	"style.css":              &bintree{styleCss, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory
@@ -301,4 +302,3 @@ func _filePath(dir, name string) string {
 	cannonicalName := strings.Replace(name, "\\", "/", -1)
 	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
-
