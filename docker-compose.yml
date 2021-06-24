@@ -1,16 +1,16 @@
 version: '3'
 services:
-#  frontend:
-#    ports:
-#      - "8000:8000"
-#    build:
-#      context: .
-#      dockerfile: Dockerfile.frontend
-#    image: johnstcn/freshcomics-frontend:latest
-#    depends_on:
-#      - db
-#    networks:
-#      - freshcomics-network
+ frontend:
+   ports:
+     - "8000:8000"
+   build:
+     context: .
+     dockerfile: Dockerfile.freshcomics
+   image: johnstcn/freshcomics:latest
+   depends_on:
+     - db
+   networks:
+     - freshcomics-network
 
   crawld:
     ports:

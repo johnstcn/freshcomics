@@ -35,7 +35,7 @@ RUN cd ./cmd/crawld && \
 
 # Final stage: the running container.
 FROM scratch AS final
-MAINTAINER Cian Johnston <public@cianjohnston.ie>
+LABEL AUTHOR Cian Johnston <public@cianjohnston.ie>
 
 # Import the user and group files from the first stage.
 COPY --from=builder /user/group /user/passwd /etc/
