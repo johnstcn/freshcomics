@@ -1,88 +1,93 @@
 package web
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/gorilla/mux"
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
 	"github.com/tdewolff/minify/html"
 	"golang.org/x/exp/slog"
 
-	"github.com/johnstcn/freshcomics/internal/frontend/config"
 	"github.com/johnstcn/freshcomics/internal/store"
 )
 
 type frontend struct {
-	mux.Router
-	store  store.Store
-	comics []store.Comic
-	tpl    *template.Template
-	log    *slog.Logger
+	*http.ServeMux
+	store store.Store
+	log   *slog.Logger
+	tpl   *template.Template
 }
 
-func NewFrontend(s store.Store) *frontend {
-	comics := make([]store.Comic, 0)
+type Deps struct {
+	Mux    *http.ServeMux
+	Store  store.Store
+	Logger *slog.Logger
+}
+
+func New(deps Deps) *frontend {
 	f := &frontend{
-		store:  s,
-		comics: comics,
+		ServeMux: deps.Mux,
+		store:    deps.Store,
+		log:      deps.Logger,
 	}
 
 	f.initTemplates()
 	f.initRoutes()
-	go f.UpdateComics()
 
 	return f
 }
 
-func (f *frontend) UpdateComics() {
-	interval := time.Duration(config.Cfg.RefreshIntervalSecs) * time.Second
-	for {
-		f.log.Debug("updating comic list")
-		newComics, err := f.store.GetComics()
-		if err != nil {
-			f.log.Error("update comic list", "err", err)
-		} else {
-			f.comics = newComics
-		}
-		time.Sleep(interval)
+func (f *frontend) indexHandler(w http.ResponseWriter, r *http.Request) {
+	comics, err := f.store.GetComics()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("get comics: %s", err.Error())))
+		return
 	}
-}
-
-func (f *frontend) indexHandler(resp http.ResponseWriter, req *http.Request) {
 	data := struct {
 		Comics []store.Comic
 	}{
-		Comics: f.comics,
+		Comics: comics,
 	}
-	err := f.tpl.ExecuteTemplate(resp, "frontend_index", &data)
+	err = f.tpl.ExecuteTemplate(w, "frontend_index", &data)
 	if err != nil {
 		f.log.Error("execute template frontend_index", "err", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("execute template frontend_index: %s", err.Error())))
+		return
 	}
 }
 
-func (f *frontend) redirectHandler(resp http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	if vars["id"] == "" {
-		resp.WriteHeader(http.StatusBadRequest)
+func (f *frontend) redirectHandler(w http.ResponseWriter, r *http.Request) {
+	idVal, ok := r.URL.Query()["id"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("parameter id is required"))
 		return
 	}
-	updateId, err := strconv.Atoi(vars["id"])
+	if len(idVal) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("parameter id must have a value"))
+		return
+	}
+	updateId, err := strconv.Atoi(idVal[0])
 	if err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("parameter id must be an integer"))
 		return
 	}
 	url, err := f.store.Redirect(store.SiteUpdateID(updateId))
 	if err != nil {
-		http.NotFound(resp, req)
+		http.NotFound(w, r)
+		w.Write([]byte("no update found with id " + idVal[0]))
 		return
 	}
-	http.Redirect(resp, req, url, http.StatusMovedPermanently)
+	http.Redirect(w, r, url, http.StatusMovedPermanently)
 }
 
 func (f *frontend) cssHandler(resp http.ResponseWriter, req *http.Request) {
