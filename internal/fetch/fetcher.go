@@ -1,13 +1,13 @@
 package fetch
 
 import (
+	"fmt"
 	"io/ioutil"
 	"math"
 	"net/http"
 	"time"
 
-	"github.com/golang/glog"
-	"github.com/pkg/errors"
+	"golang.org/x/exp/slog"
 )
 
 //go:generate mockery -interface PageFetcher -package fetchtest
@@ -35,7 +35,6 @@ type FetchedPage struct {
 	URL          string // URL fetched
 	ResponseCode int    // Response code returned
 	Body         []byte // Response body
-	Err          error  // Last error encountered when fetching URL
 }
 
 // PageFetcher fetches a given URL with a number of maxAttempts
@@ -52,6 +51,7 @@ type pageFetcher struct {
 	backoff     backoffFunc
 	after       afterFunc
 	userAgent   string
+	log         *slog.Logger
 }
 
 // NewPageFetcher returns a new PageFetcher with exponential backoff
@@ -76,50 +76,47 @@ func (f *pageFetcher) fetchWithRetry(url string) (FetchedPage, error) {
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return FetchedPage{}, errors.Wrapf(err, "unable to create HTTP request for url %s", url)
+		return FetchedPage{}, fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Add("User-Agent", f.userAgent)
 
 	for {
-		glog.V(9).Infof("GET [%d/%d] %s", attempt, f.maxAttempts, url)
-		p = f.fetchOneAttempt(req)
-		if p.Err != nil {
-			glog.V(9).Infof("Attempt %d/%d failed: %v", attempt+1, f.maxAttempts, p.Err)
-			attempt++
-			if attempt < f.maxAttempts {
-				glog.V(9).Infof("Waiting %d secs", f.backoff(attempt))
-				<-f.after(f.backoff(attempt))
-				continue
-			}
-
-			// bail here, max attempts reached
-			glog.V(9).Info("max attempts reached")
-			break
+		f.log.Debug("get", "attempt", attempt, "max", f.maxAttempts, "url", url)
+		p, err = f.fetchOneAttempt(req)
+		if err == nil {
+			return p, nil
+		}
+		attempt++
+		if attempt < f.maxAttempts {
+			f.log.Debug("backoff", "attempt", attempt, "max", f.maxAttempts, "url", url)
+			<-f.after(f.backoff(attempt))
+			continue
 		}
 
-		return p, nil
+		// bail here, max attempts reached
+		f.log.Error("get failed", "attempts", f.maxAttempts, "url", url, "err", err)
+		break
 	}
-	return p, errors.New("max attempts reached")
+
+	return p, err
 }
 
-func (f *pageFetcher) fetchOneAttempt(r *http.Request) FetchedPage {
-	var p = FetchedPage{
+func (f *pageFetcher) fetchOneAttempt(r *http.Request) (FetchedPage, error) {
+	p := FetchedPage{
 		URL: r.URL.String(),
 	}
 
 	resp, err := f.client.Do(r)
 	if err != nil {
-		p.Err = err
-		return p
+		return p, err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		p.Err = errors.Wrap(err, "error reading response body")
-		return p
+		return p, fmt.Errorf("read response body: %w", err)
 	}
 
 	p.ResponseCode = resp.StatusCode
 	p.Body = body
-	return p
+	return p, nil
 }

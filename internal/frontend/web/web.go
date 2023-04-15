@@ -1,11 +1,8 @@
 package web
 
 import (
-	"fmt"
 	"html/template"
-	"net"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -15,8 +12,8 @@ import (
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
 	"github.com/tdewolff/minify/html"
+	"golang.org/x/exp/slog"
 
-	"github.com/johnstcn/freshcomics/internal/common/log"
 	"github.com/johnstcn/freshcomics/internal/frontend/config"
 	"github.com/johnstcn/freshcomics/internal/store"
 )
@@ -26,6 +23,7 @@ type frontend struct {
 	store  store.Store
 	comics []store.Comic
 	tpl    *template.Template
+	log    *slog.Logger
 }
 
 func NewFrontend(s store.Store) *frontend {
@@ -45,10 +43,10 @@ func NewFrontend(s store.Store) *frontend {
 func (f *frontend) UpdateComics() {
 	interval := time.Duration(config.Cfg.RefreshIntervalSecs) * time.Second
 	for {
-		log.Info("updating comic list")
+		f.log.Debug("updating comic list")
 		newComics, err := f.store.GetComics()
 		if err != nil {
-			log.Error("could not update comic list:", err)
+			f.log.Error("update comic list", "err", err)
 		} else {
 			f.comics = newComics
 		}
@@ -64,20 +62,8 @@ func (f *frontend) indexHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 	err := f.tpl.ExecuteTemplate(resp, "frontend_index", &data)
 	if err != nil {
-		log.Error("could not execute frontend_index template:", err)
+		f.log.Error("execute template frontend_index", "err", err)
 	}
-}
-
-//lint:ignore U1000 TODO(cian): to be used later
-func (f *frontend) remoteIP(req *http.Request) (net.IP, error) {
-	fwdHdr := req.Header.Get("X-Forwarded-For")
-	log.Debug("X-Forwarded-For header:", fwdHdr)
-	fwdAddr := regexp.MustCompile(`^\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)`).FindString(fwdHdr)
-	addr := net.ParseIP(fwdAddr)
-	if fwdAddr == "" || addr == nil {
-		return nil, fmt.Errorf("unable to parse X-Forwarded-For: %s", fwdHdr)
-	}
-	return addr, nil
 }
 
 func (f *frontend) redirectHandler(resp http.ResponseWriter, req *http.Request) {
@@ -102,14 +88,13 @@ func (f *frontend) redirectHandler(resp http.ResponseWriter, req *http.Request) 
 func (f *frontend) cssHandler(resp http.ResponseWriter, req *http.Request) {
 	m := minify.New()
 	m.AddFunc("text/css", css.Minify)
-	log.Debug(req.RequestURI)
 	cssAsset, err := Asset(strings.TrimLeft(req.RequestURI, "/"))
 	if err != nil {
-		log.Error(err)
+		f.log.Error("css asset", "err", err)
 	}
 	minified, err := m.Bytes("text/css", cssAsset)
 	if err != nil {
-		log.Error("unable to minify css:", err)
+		f.log.Error("minify css", "err", err)
 	}
 	resp.Header().Add("Content-Type", "text/css")
 	resp.Write(minified)
@@ -130,10 +115,9 @@ func (f *frontend) initTemplates() {
 		s := MustAsset(an)
 		ms, err := m.Bytes("text/html", s)
 		if err != nil {
-			log.Error("unable to minify template:", an)
+			f.log.Error("minify template", "asset", an, "err", err)
 		}
 		tpl.Parse(string(ms))
-		log.Debug("template init:", an)
 	}
 }
 

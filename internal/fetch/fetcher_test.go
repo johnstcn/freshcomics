@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/johnstcn/freshcomics/internal/testutil/slogtest"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -64,6 +64,7 @@ func (s *PageFetcherTestSuite) SetupSuite() {
 		maxAttempts: 2,
 		backoff:     backoffExponential,
 		after:       s.afterer.after,
+		log:         slogtest.New(s.T()),
 	}
 }
 
@@ -91,16 +92,15 @@ func (s *PageFetcherTestSuite) TestFetch_OK() {
 	testUrl := "http://test.url/path"
 	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return(&http.Response{
 		StatusCode: http.StatusOK,
-		Body:       ioutil.NopCloser(strings.NewReader("body")),
+		Body:       io.NopCloser(strings.NewReader("body")),
 	}, nil).Once()
 
 	p, err := s.fetcher.Fetch(testUrl)
 
+	s.NoError(err)
 	s.Equal(http.StatusOK, p.ResponseCode)
 	s.Equal(testUrl, p.URL)
 	s.EqualValues([]byte("body"), p.Body)
-	s.NoError(p.Err)
-	s.NoError(err)
 }
 
 func (s *PageFetcherTestSuite) TestFetchOneAttempt_Err_Do() {
@@ -108,12 +108,12 @@ func (s *PageFetcherTestSuite) TestFetchOneAttempt_Err_Do() {
 	testReq, _ := http.NewRequest(http.MethodGet, testUrl, nil)
 	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return((*http.Response)(nil), errors.New("client error")).Once()
 
-	p := s.fetcher.fetchOneAttempt(testReq)
+	p, err := s.fetcher.fetchOneAttempt(testReq)
 
+	s.EqualError(err, "client error")
 	s.Zero(p.ResponseCode)
 	s.Equal(testUrl, p.URL)
 	s.Empty(p.Body)
-	s.EqualError(p.Err, "client error")
 }
 
 func (s *PageFetcherTestSuite) TestFetchOneAttempt_Err_Read() {
@@ -121,15 +121,15 @@ func (s *PageFetcherTestSuite) TestFetchOneAttempt_Err_Read() {
 	testReq, _ := http.NewRequest(http.MethodGet, testUrl, nil)
 	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return(&http.Response{
 		StatusCode: http.StatusOK,
-		Body:       ioutil.NopCloser(&badReader{}),
+		Body:       io.NopCloser(&badReader{}),
 	}, nil).Once()
 
-	p := s.fetcher.fetchOneAttempt(testReq)
+	p, err := s.fetcher.fetchOneAttempt(testReq)
 
+	s.EqualError(err, "read response body: could not read")
 	s.Zero(p.ResponseCode)
 	s.Equal(testUrl, p.URL)
 	s.Empty(p.Body)
-	s.EqualError(p.Err, "error reading response body: could not read")
 }
 
 func (s *PageFetcherTestSuite) TestFetchWithRetry_Retry_OK() {
@@ -138,29 +138,27 @@ func (s *PageFetcherTestSuite) TestFetchWithRetry_Retry_OK() {
 	s.afterer.On("after", 1*time.Second).Return().Once()
 	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return(&http.Response{
 		StatusCode: http.StatusOK,
-		Body:       ioutil.NopCloser(strings.NewReader("body")),
+		Body:       io.NopCloser(strings.NewReader("body")),
 	}, nil).Once()
 
 	p, err := s.fetcher.fetchWithRetry(testUrl)
 
+	s.NoError(err)
 	s.Equal(http.StatusOK, p.ResponseCode)
 	s.Equal(testUrl, p.URL)
 	s.EqualValues([]byte("body"), p.Body)
-	s.NoError(p.Err)
-	s.NoError(err)
 }
 
 func (s *PageFetcherTestSuite) TestFetchWithRetry_Retry_Err() {
 	testUrl := "http://test.url/path"
 	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return((*http.Response)(nil), fmt.Errorf("try again")).Once()
 	s.afterer.On("after", 1*time.Second).Return().Once()
-	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return((*http.Response)(nil), fmt.Errorf("try again")).Once()
+	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return((*http.Response)(nil), fmt.Errorf("give up already")).Once()
 
 	p, err := s.fetcher.fetchWithRetry(testUrl)
 
+	s.EqualError(err, "give up already")
 	s.Equal(testUrl, p.URL)
 	s.Zero(p.ResponseCode)
 	s.Zero(p.Body)
-	s.EqualError(p.Err, "try again")
-	s.EqualError(err, "max attempts reached")
 }

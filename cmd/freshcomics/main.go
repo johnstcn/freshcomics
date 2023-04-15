@@ -7,14 +7,13 @@ import (
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/johnstcn/freshcomics/internal/common/log"
 	"github.com/johnstcn/freshcomics/internal/frontend/config"
 	"github.com/johnstcn/freshcomics/internal/frontend/web"
 	"github.com/johnstcn/freshcomics/internal/store"
+	"golang.org/x/exp/slog"
 )
 
 func main() {
-	log.Info("Starting up")
 	conn, err := sqlx.Connect("postgres", config.Cfg.DSN)
 	if err != nil {
 		panic(err)
@@ -26,7 +25,7 @@ func main() {
 	}
 
 	listenAddress := fmt.Sprintf("%s:%d", config.Cfg.Host, config.Cfg.Port)
-	log.Info("Listening on", listenAddress)
+	slog.Info("listen", "host", config.Cfg.Host, "port", config.Cfg.Port)
 	fe := web.NewFrontend(store)
 	if err != nil {
 		panic(err)
