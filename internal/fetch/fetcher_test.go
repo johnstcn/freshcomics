@@ -1,164 +1,123 @@
 package fetch
 
 import (
-	"errors"
-	"fmt"
-	"io"
+	"context"
 	"net/http"
-	"strings"
+	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/johnstcn/freshcomics/internal/testutil/slogtest"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-type mockClient struct {
-	mock.Mock
-}
+func TestPageFetcher(t *testing.T) {
+	t.Parallel()
 
-func (c *mockClient) Do(r *http.Request) (*http.Response, error) {
-	args := c.Called(r)
-	return args.Get(0).(*http.Response), args.Error(1)
-}
+	t.Run("New", func(t *testing.T) {
+		t.Parallel()
+		p := New(&Args{})
+		assert.NotNil(t, p)
+	})
 
-// mockAfterer helps verify correct backoff
-type mockAfterer struct {
-	mock.Mock
-}
+	t.Run("OK", func(t *testing.T) {
+		t.Parallel()
+		var (
+			ctx, cancel = context.WithCancel(context.Background())
+			useragent   = "testing"
+			body        = "body"
+			handler     = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, useragent, r.Header.Get("User-Agent"))
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(body))
+			})
+			srv    = httptest.NewServer(handler)
+			client = srv.Client()
+		)
+		t.Cleanup(cancel)
+		t.Cleanup(srv.Close)
 
-func (m *mockAfterer) after(d time.Duration) <-chan time.Time {
-	m.Called(d)
-	ch := make(chan time.Time)
-	go func() {
-		ch <- time.Time{}
-	}()
-	return ch
-}
+		pf := &pageFetcher{
+			client:    client,
+			retries:   0,
+			wait:      1,
+			userAgent: useragent,
+			log:       slogtest.New(t),
+		}
 
-type badReader struct{}
+		p, err := pf.Fetch(ctx, srv.URL)
+		require.NoError(t, err)
+		require.Equal(t, srv.URL, p.URL)
+		require.Equal(t, body, string(p.Body))
+		require.Equal(t, http.StatusOK, p.ResponseCode)
+		require.Zero(t, p.Retries)
+	})
 
-func (br *badReader) Read([]byte) (int, error) {
-	return 0, fmt.Errorf("could not read")
-}
+	t.Run("RetryOK", func(t *testing.T) {
+		t.Parallel()
+		var (
+			ctx, cancel = context.WithCancel(context.Background())
+			useragent   = "testing"
+			body        = "body"
+			calls       = 0
+			handler     = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if calls == 0 {
+					// Fake an invalid body
+					w.Header().Set("Content-Length", "1")
+				}
+				calls++
+				assert.Equal(t, useragent, r.Header.Get("User-Agent"))
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(body))
+			})
+			srv    = httptest.NewServer(handler)
+			client = srv.Client()
+		)
+		t.Cleanup(srv.Close)
+		t.Cleanup(cancel)
 
-var _ io.Reader = (*badReader)(nil)
+		pf := &pageFetcher{
+			client:    client,
+			retries:   1,
+			wait:      1,
+			userAgent: useragent,
+			log:       slogtest.New(t),
+		}
 
-type PageFetcherTestSuite struct {
-	suite.Suite
-	client  *mockClient
-	afterer *mockAfterer
-	fetcher *pageFetcher
-}
+		p, err := pf.Fetch(ctx, srv.URL)
+		require.NoError(t, err)
+		assert.Equal(t, srv.URL, p.URL)
+		assert.Equal(t, body, string(p.Body))
+		assert.Equal(t, http.StatusOK, p.ResponseCode)
+		assert.Equal(t, 1, p.Retries)
+		assert.Equal(t, 2, calls)
+	})
 
-func TestPageFetcherTestSuite(t *testing.T) {
-	suite.Run(t, new(PageFetcherTestSuite))
-}
+	t.Run("RetryErr", func(t *testing.T) {
+		t.Parallel()
+		var (
+			ctx, cancel = context.WithCancel(context.Background())
+			useragent   = "testing"
+			handler     = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Fake an invalid body
+				w.Header().Set("Content-Length", "1")
+			})
+			srv    = httptest.NewServer(handler)
+			client = srv.Client()
+		)
+		t.Cleanup(srv.Close)
+		t.Cleanup(cancel)
 
-func (s *PageFetcherTestSuite) SetupSuite() {
-	s.client = &mockClient{}
-	s.afterer = &mockAfterer{}
-	s.fetcher = &pageFetcher{
-		client:      s.client,
-		maxAttempts: 2,
-		backoff:     backoffExponential,
-		after:       s.afterer.after,
-		log:         slogtest.New(s.T()),
-	}
-}
+		pf := &pageFetcher{
+			client:    client,
+			retries:   1,
+			wait:      1,
+			userAgent: useragent,
+			log:       slogtest.New(t),
+		}
 
-func (s *PageFetcherTestSuite) TearDownTest() {
-	s.client.AssertExpectations(s.T())
-	s.afterer.AssertExpectations(s.T())
-}
-
-func (s *PageFetcherTestSuite) TestBackoff() {
-	s.Equal(0*time.Second, backoffExponential(0))
-	s.Equal(1*time.Second, backoffExponential(1))
-	s.Equal(2*time.Second, backoffExponential(2))
-	s.Equal(4*time.Second, backoffExponential(3))
-	s.Equal(8*time.Second, backoffExponential(4))
-}
-
-func (s *PageFetcherTestSuite) TestNewPageFetcher() {
-	pf := NewPageFetcher(http.DefaultClient,
-		1, "test")
-	s.NotNil(pf)
-	s.Implements((*PageFetcher)(nil), pf)
-}
-
-func (s *PageFetcherTestSuite) TestFetch_OK() {
-	testUrl := "http://test.url/path"
-	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return(&http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(strings.NewReader("body")),
-	}, nil).Once()
-
-	p, err := s.fetcher.Fetch(testUrl)
-
-	s.NoError(err)
-	s.Equal(http.StatusOK, p.ResponseCode)
-	s.Equal(testUrl, p.URL)
-	s.EqualValues([]byte("body"), p.Body)
-}
-
-func (s *PageFetcherTestSuite) TestFetchOneAttempt_Err_Do() {
-	testUrl := "http://test.url/path"
-	testReq, _ := http.NewRequest(http.MethodGet, testUrl, nil)
-	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return((*http.Response)(nil), errors.New("client error")).Once()
-
-	p, err := s.fetcher.fetchOneAttempt(testReq)
-
-	s.EqualError(err, "client error")
-	s.Zero(p.ResponseCode)
-	s.Equal(testUrl, p.URL)
-	s.Empty(p.Body)
-}
-
-func (s *PageFetcherTestSuite) TestFetchOneAttempt_Err_Read() {
-	testUrl := "http://test.url/path"
-	testReq, _ := http.NewRequest(http.MethodGet, testUrl, nil)
-	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return(&http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(&badReader{}),
-	}, nil).Once()
-
-	p, err := s.fetcher.fetchOneAttempt(testReq)
-
-	s.EqualError(err, "read response body: could not read")
-	s.Zero(p.ResponseCode)
-	s.Equal(testUrl, p.URL)
-	s.Empty(p.Body)
-}
-
-func (s *PageFetcherTestSuite) TestFetchWithRetry_Retry_OK() {
-	testUrl := "http://test.url/path"
-	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return((*http.Response)(nil), fmt.Errorf("try again")).Once()
-	s.afterer.On("after", 1*time.Second).Return().Once()
-	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return(&http.Response{
-		StatusCode: http.StatusOK,
-		Body:       io.NopCloser(strings.NewReader("body")),
-	}, nil).Once()
-
-	p, err := s.fetcher.fetchWithRetry(testUrl)
-
-	s.NoError(err)
-	s.Equal(http.StatusOK, p.ResponseCode)
-	s.Equal(testUrl, p.URL)
-	s.EqualValues([]byte("body"), p.Body)
-}
-
-func (s *PageFetcherTestSuite) TestFetchWithRetry_Retry_Err() {
-	testUrl := "http://test.url/path"
-	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return((*http.Response)(nil), fmt.Errorf("try again")).Once()
-	s.afterer.On("after", 1*time.Second).Return().Once()
-	s.client.On("Do", mock.AnythingOfType("*http.Request")).Return((*http.Response)(nil), fmt.Errorf("give up already")).Once()
-
-	p, err := s.fetcher.fetchWithRetry(testUrl)
-
-	s.EqualError(err, "give up already")
-	s.Equal(testUrl, p.URL)
-	s.Zero(p.ResponseCode)
-	s.Zero(p.Body)
+		p, err := pf.Fetch(ctx, srv.URL)
+		require.Error(t, err)
+		assert.Equal(t, 1, p.Retries)
+	})
 }
