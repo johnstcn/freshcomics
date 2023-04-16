@@ -2,9 +2,11 @@ package store
 
 import (
 	"github.com/jmoiron/sqlx"
+
+	_ "github.com/golang/mock/mockgen/model"
 )
 
-//go:generate mockery --all
+//go:generate mockgen -destination mocks/store.go . Store
 
 type Store interface {
 	ComicStore
@@ -14,7 +16,6 @@ type Store interface {
 	CrawlInfoStore
 }
 
-// TODO return a ComicList with the timestamp
 type ComicStore interface {
 	// GetComics returns the latest comics
 	GetComics() ([]Comic, error)

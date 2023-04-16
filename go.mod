@@ -6,6 +6,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fiorix/freegeoip v3.4.1+incompatible
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
+	github.com/golang/mock v1.6.0
 	github.com/howeyc/fsnotify v0.9.0 // indirect
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/johnstcn/gocrawl v0.0.0-20180902141818-b122e079f088
