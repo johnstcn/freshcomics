@@ -1,4 +1,4 @@
-package web_test
+package api_test
 
 import (
 	"encoding/json"
@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/johnstcn/freshcomics/internal/api"
 	"github.com/johnstcn/freshcomics/internal/store"
 	mock_store "github.com/johnstcn/freshcomics/internal/store/mocks"
 	"github.com/johnstcn/freshcomics/internal/testutil/slogtest"
-	"github.com/johnstcn/freshcomics/internal/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -35,7 +35,7 @@ func TestWeb(t *testing.T) {
 		store := mock_store.NewMockStore(ctrl)
 		t.Cleanup(ctrl.Finish)
 		log := slogtest.New(t)
-		fe := web.New(web.Deps{
+		fe := api.New(api.Deps{
 			Mux:    mux,
 			Store:  store,
 			Logger: log,
@@ -60,7 +60,7 @@ func TestWeb(t *testing.T) {
 			require.NoError(t, err)
 			t.Cleanup(func() { _ = res.Body.Close() })
 			require.Equal(t, http.StatusOK, res.StatusCode)
-			var list web.ListComicsResponse
+			var list api.ListComicsResponse
 			require.NoError(t, json.NewDecoder(res.Body).Decode(&list))
 			assert.Equal(t, comics, list.Data)
 			assert.Empty(t, list.Error)
@@ -74,7 +74,7 @@ func TestWeb(t *testing.T) {
 			require.NoError(t, err)
 			t.Cleanup(func() { _ = res.Body.Close() })
 			require.Equal(t, http.StatusInternalServerError, res.StatusCode)
-			var list web.ListComicsResponse
+			var list api.ListComicsResponse
 			require.NoError(t, json.NewDecoder(res.Body).Decode(&list))
 			assert.Empty(t, list.Data)
 			assert.EqualError(t, testErr, list.Error)

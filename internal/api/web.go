@@ -1,4 +1,4 @@
-package web
+package api
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"github.com/johnstcn/freshcomics/internal/store"
 )
 
-type frontend struct {
+type apiHandler struct {
 	*http.ServeMux
 	store store.Store
 	log   *slog.Logger
@@ -21,8 +21,8 @@ type Deps struct {
 	Logger *slog.Logger
 }
 
-func New(deps Deps) *frontend {
-	f := &frontend{
+func New(deps Deps) *apiHandler {
+	f := &apiHandler{
 		ServeMux: deps.Mux,
 		store:    deps.Store,
 		log:      deps.Logger,
@@ -38,15 +38,15 @@ type ListComicsResponse struct {
 	Error string        `json:"error"`
 }
 
-func (f *frontend) listComics(w http.ResponseWriter, r *http.Request) {
+func (h *apiHandler) listComics(w http.ResponseWriter, r *http.Request) {
 	resp := ListComicsResponse{
 		Data:  []store.Comic{},
 		Error: "",
 	}
 	code := http.StatusOK
-	data, err := f.store.GetComics()
+	data, err := h.store.GetComics()
 	if err != nil {
-		f.log.Error("get data from store", "err", err, "handler", "listComics")
+		h.log.Error("get data from store", "err", err, "handler", "listComics")
 		code = http.StatusInternalServerError
 		resp.Error = err.Error()
 	} else {
@@ -56,6 +56,6 @@ func (f *frontend) listComics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(code)
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		f.log.Error("write response", "err", err, "handler", "listComics")
+		h.log.Error("write response", "err", err, "handler", "listComics")
 	}
 }

@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/johnstcn/freshcomics/internal/api"
 	"github.com/johnstcn/freshcomics/internal/store"
-	"github.com/johnstcn/freshcomics/internal/web"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slog"
 )
@@ -35,13 +35,13 @@ func root() *cobra.Command {
 			mux := http.NewServeMux()
 
 			log := slog.New(slog.NewTextHandler(cmd.OutOrStdout()))
-			fe := web.New(web.Deps{
+			srv := api.New(api.Deps{
 				Mux:    mux,
 				Store:  store,
 				Logger: log,
 			})
 			slog.Info("listen", "host", host, "port", port)
-			return http.ListenAndServe(listenAddress, fe)
+			return http.ListenAndServe(listenAddress, srv)
 		},
 	}
 
