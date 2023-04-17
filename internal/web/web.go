@@ -51,7 +51,7 @@ func (f *frontend) indexHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		Comics: comics,
 	}
-	err = f.tpl.ExecuteTemplate(w, "frontend_index", &data)
+	err = f.tpl.ExecuteTemplate(w, "index", &data)
 	if err != nil {
 		f.log.Error("execute template frontend_index", "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -96,8 +96,9 @@ func (f *frontend) initTemplates() {
 	fm := template.FuncMap{
 		"humanDuration": humanize.Time,
 	}
-	tpl := template.New("").Funcs(fm)
+	tpl := template.New("index").Funcs(fm)
 	tpl.ParseFS(templates.FS)
+	f.tpl = tpl
 }
 
 func (f *frontend) initRoutes() {
