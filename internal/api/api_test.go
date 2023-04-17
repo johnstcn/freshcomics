@@ -35,12 +35,12 @@ func TestWeb(t *testing.T) {
 		store := mock_store.NewMockStore(ctrl)
 		t.Cleanup(ctrl.Finish)
 		log := slogtest.New(t)
-		fe := api.New(api.Deps{
+		api.New(api.Deps{
 			Mux:    mux,
 			Store:  store,
 			Logger: log,
 		})
-		srv := httptest.NewServer(fe)
+		srv := httptest.NewServer(mux)
 		t.Cleanup(srv.Close)
 		return params{
 			Store:  store,

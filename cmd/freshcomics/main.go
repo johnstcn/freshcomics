@@ -13,6 +13,7 @@ import (
 
 	"github.com/johnstcn/freshcomics/internal/api"
 	"github.com/johnstcn/freshcomics/internal/store"
+	"github.com/johnstcn/freshcomics/internal/ui"
 )
 
 func main() {
@@ -62,14 +63,17 @@ func main() {
 
 	listenAddress := fmt.Sprintf("%s:%d", host, port)
 	mux := http.NewServeMux()
-	srv := api.New(api.Deps{
+	api.New(api.Deps{
 		Mux:    mux,
 		Store:  store,
 		Logger: log,
 	})
+	ui.New(ui.Deps{
+		Mux: mux,
+	})
 
 	slog.Info("listen", "host", host, "port", port)
-	if err := http.ListenAndServe(listenAddress, srv); err != nil {
+	if err := http.ListenAndServe(listenAddress, mux); err != nil {
 		log.Error("listen and serve", "err", err)
 	}
 }

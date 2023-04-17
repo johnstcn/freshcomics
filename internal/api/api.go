@@ -21,7 +21,7 @@ type Deps struct {
 	Logger *slog.Logger
 }
 
-func New(deps Deps) http.Handler {
+func New(deps Deps) {
 	f := &handler{
 		ServeMux: deps.Mux,
 		store:    deps.Store,
@@ -29,8 +29,6 @@ func New(deps Deps) http.Handler {
 	}
 
 	f.HandleFunc("/api/comics/", f.listComics)
-
-	return f
 }
 
 type ListComicsResponse struct {
