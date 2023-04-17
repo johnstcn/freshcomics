@@ -13,11 +13,12 @@ type SiteUpdateID int64
 type CrawlInfoID int64
 
 type Comic struct {
-	ID     ComicID   `db:"id"`
-	Name   string    `db:"name"`
-	Title  string    `db:"title"`
-	SeenAt time.Time `db:"seen_at"`
-	NSFW   bool      `db:"nsfw"`
+	ID     ComicID   `db:"id" json:"id"`
+	Name   string    `db:"name" json:"name"`
+	Title  string    `db:"title" json:"title"`
+	SeenAt time.Time `db:"seen_at" json:"seen_at"`
+	NSFW   bool      `db:"nsfw" json:"nsfw"`
+	URL    string    `db:"url" json:"url"`
 }
 
 type ClickLog struct {
