@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/exp/slices"
 	"golang.org/x/exp/slog"
 
 	"github.com/johnstcn/freshcomics/internal/api"
@@ -40,6 +41,11 @@ func main() {
 	flag.StringVar(&dsn, "dsn", "postgresql://localhost:5432/freshcomics?user=freshcomics&password=freshcomics", "postgresql connection string")
 	if val, ok := os.LookupEnv("FRESHCOMICS_DB"); ok {
 		dsn = val
+	}
+
+	if slices.Contains(os.Args, "-help") {
+		flag.PrintDefaults()
+		os.Exit(0)
 	}
 
 	conn, err := sqlx.Connect("postgres", dsn)
