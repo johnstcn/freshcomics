@@ -9,7 +9,7 @@ import (
 	"github.com/johnstcn/freshcomics/internal/store"
 )
 
-type apiHandler struct {
+type handler struct {
 	*http.ServeMux
 	store store.Store
 	log   *slog.Logger
@@ -21,8 +21,8 @@ type Deps struct {
 	Logger *slog.Logger
 }
 
-func New(deps Deps) *apiHandler {
-	f := &apiHandler{
+func New(deps Deps) http.Handler {
+	f := &handler{
 		ServeMux: deps.Mux,
 		store:    deps.Store,
 		log:      deps.Logger,
@@ -38,7 +38,7 @@ type ListComicsResponse struct {
 	Error string        `json:"error"`
 }
 
-func (h *apiHandler) listComics(w http.ResponseWriter, r *http.Request) {
+func (h *handler) listComics(w http.ResponseWriter, r *http.Request) {
 	resp := ListComicsResponse{
 		Data:  []store.Comic{},
 		Error: "",
