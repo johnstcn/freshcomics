@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-//go:embed dist/*
+//go:embed static/*
 var staticFS embed.FS
 
 type Deps struct {
