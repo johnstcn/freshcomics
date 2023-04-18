@@ -10,7 +10,7 @@ import (
 )
 
 //go:embed all:dist
-var assetsFS embed.FS
+var distFS embed.FS
 
 //go:embed dist/index.html
 var indexHTML []byte
@@ -21,8 +21,12 @@ type Deps struct {
 }
 
 func New(deps Deps) {
-	logFS(deps.Logger, assetsFS, "dist")
-	deps.Mux.Handle("/dist/", http.FileServer(http.FS(assetsFS)))
+	assetsFS, err := fs.Sub(distFS, "dist")
+	if err != nil {
+		panic(err)
+	}
+	logFS(deps.Logger, assetsFS, "assets")
+	deps.Mux.Handle("/assets/", http.FileServer(http.FS(assetsFS)))
 	deps.Mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write(indexHTML)
