@@ -12,8 +12,8 @@ import (
 	"golang.org/x/exp/slog"
 
 	"github.com/johnstcn/freshcomics/internal/api"
+	"github.com/johnstcn/freshcomics/internal/app"
 	"github.com/johnstcn/freshcomics/internal/store"
-	"github.com/johnstcn/freshcomics/internal/ui"
 )
 
 func main() {
@@ -39,7 +39,11 @@ func main() {
 		}
 	}
 
-	flag.StringVar(&dsn, "dsn", "postgresql://localhost:5432/freshcomics?user=freshcomics&password=freshcomics", "postgresql connection string")
+	flag.StringVar(&dsn, "dsn",
+		"postgresql://localhost:5432/freshcomics"+
+			"?user=freshcomics"+
+			"&password=freshcomics"+
+			"&sslmode=disable", "postgresql connection string")
 	if val, ok := os.LookupEnv("FRESHCOMICS_DB"); ok {
 		dsn = val
 	}
@@ -63,16 +67,17 @@ func main() {
 
 	listenAddress := fmt.Sprintf("%s:%d", host, port)
 	mux := http.NewServeMux()
+	app.New(app.Deps{
+		Mux:    mux,
+		Logger: log,
+	})
 	api.New(api.Deps{
 		Mux:    mux,
 		Store:  store,
 		Logger: log,
 	})
-	ui.New(ui.Deps{
-		Mux: mux,
-	})
 
-	slog.Info("listen", "host", host, "port", port)
+	log.Info("listen", "host", host, "port", port)
 	if err := http.ListenAndServe(listenAddress, mux); err != nil {
 		log.Error("listen and serve", "err", err)
 	}
